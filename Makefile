@@ -1,33 +1,31 @@
-OBJECTS=matrix-server.o
-BINARIES=matrix-server
+OBJECTS=src/*.o
+BINARIES=matryx-server
 
-RGB_INCDIR=matrix/include
-RGB_LIBDIR=matrix/lib
+
+RGB_INCDIR=rpi-rgb-led-matrix/include
+RGB_LIBDIR=rpi-rgb-led-matrix/lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
+
+CFLAGS+=-O3
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) \
 	 -lpthread -lczmq
 
-all : matrix-server
 
-run : matrix-server
-	sudo ./matrix-server
+all : matryx-server
 
-matrix-server : $(OBJECTS) $(RGB_LIBRARY)
+
+matryx-server : $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
-
-$(RGB_LIBRARY): FORCE
-	$(MAKE) -C $(RGB_LIBDIR)
-
-matrix-server.o : matrix-server.c
 
 %.o : %.c
 	$(CXX) -I$(RGB_INCDIR) -c -o $@ $<
 
+
 clean:
 	rm -f $(OBJECTS) $(BINARIES)
-#	$(MAKE) -C $(RGB_LIBDIR) clean
+
 
 FORCE:
 .PHONY: FORCE
