@@ -20,7 +20,7 @@ matryx-server : $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 %.o : %.c
-	$(CXX) -I$(RGB_INCDIR) -c -o $@ $<
+	$(CC) -I$(RGB_INCDIR) -c -o $@ $<
 
 
 clean:
