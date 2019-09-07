@@ -1,0 +1,10 @@
+language: minimal
+
+services:
+  - docker
+
+deploy:
+  provider: script
+  script: bash ./travis/push_to_docker.bash
+  on:
+    branch: master
