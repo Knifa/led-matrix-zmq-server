@@ -1,10 +1,18 @@
+os: linux
+dist: xenial
 language: minimal
 
 services:
   - docker
 
+install:
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+script:
+  - docker build -t knifa/matryx-server .
+
 deploy:
   provider: script
-  script: bash ./travis/push_to_docker.bash
+  script: ./travis/push_to_docker.sh
   on:
     branch: master
