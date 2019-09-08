@@ -8,7 +8,7 @@ RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
 
-CFLAGS+=-O3
+CFLAGS+=-O3 -Wall
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) \
 	 -lpthread -lczmq
 
@@ -17,10 +17,10 @@ all : matryx-server
 
 
 matryx-server : $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
-%.o : %.c
-	$(CC) -I$(RGB_INCDIR) -c -o $@ $<
+%.o : %.cpp
+	$(CXX) $(CFLAGS) -I$(RGB_INCDIR) -c -o $@ $<
 
 
 clean:
