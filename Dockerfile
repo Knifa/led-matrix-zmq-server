@@ -29,4 +29,4 @@ RUN chmod +x ./matryx-server
 
 EXPOSE 8182/tcp
 ENV MATRYX_BRIGHTNESS=100
-CMD exec /root/matryx-server --led-brightness $MATRYX_BRIGHTNESS
+ENTRYPOINT /root/matryx-server

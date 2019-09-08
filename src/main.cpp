@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     rgb_matrix::RuntimeOptions runtime_opts;
     set_options_from_env(&matrix_opts, &runtime_opts);
 
-    if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv, &matrix_opts, &runtime_opts))
+    if (!rgb_matrix::ParseOptionsFromFlags(NULL, NULL, &matrix_opts, &runtime_opts))
     {
         rgb_matrix::PrintMatrixFlags(stdout);
         return 1;
