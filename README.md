@@ -1,10 +1,10 @@
-# matryx-server
+# led-matrix-zmq-server
 
-[![Build Status](https://travis-ci.org/Knifa/matryx-server.svg?branch=master)](https://travis-ci.org/Knifa/matryx-server)
+[![Build Status](https://travis-ci.org/Knifa/led-matrix-zmq-server.svg?branch=master)](https://travis-ci.org/Knifa/led-matrix-zmq-server)
 
 A tool for streaming frames to [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix/) over ZeroMQ.
 
-Available as a Docker image at [knifa/matryx-server](https://hub.docker.com/r/knifa/matryx-server).
+Available as a Docker image at [knifa/led-matrix-zmq-server](https://hub.docker.com/r/knifa/led-matrix-zmq-server).
 
 ## Building
 
@@ -23,7 +23,7 @@ docker run \
   -p \
   -rm \
   --priviliged \
-  knifa/matryx-sever
+  knifa/led-matrix-zmq-server
 ```
 
 The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrionment variables. Some that don't really make sense for a container (i.e., `--led-daemon`) aren't exposed. [Check out their README.md for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
