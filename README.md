@@ -20,7 +20,7 @@ docker run \
   -e MATRIX_COLS=64 \
   -e MATRIX_MAPPER="U-Mapper" \
   -e MATRIX_ROWS=64 \
-  -P \
+  -p 8182:8182 \
   --privileged \
   --rm \
   knifa/led-matrix-zmq-server
