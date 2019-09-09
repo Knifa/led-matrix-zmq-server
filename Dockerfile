@@ -28,5 +28,4 @@ COPY --from=builder /root/matryx-server ./matryx-server
 RUN chmod +x ./matryx-server
 
 EXPOSE 8182/tcp
-ENV MATRYX_BRIGHTNESS=100
 ENTRYPOINT /root/matryx-server
