@@ -53,3 +53,8 @@ The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrion
 The server is a simple REQ-REP loop. All you need to do is send your frame as a big ol' byte chunk then wait for an empty message back.
 
 Each frame should be in a BGR32 format, with exact size depending on your matrix setup (i.e., whatever `rpi-rgb-led-matrix` says your final canvas size is.)
+
+
+## License
+
+GNU GPL v3. See [LICENSE](LICENSE).
