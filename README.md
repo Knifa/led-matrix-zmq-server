@@ -20,13 +20,13 @@ docker run \
   -e MATRIX_COLS=64 \
   -e MATRIX_MAPPER="U-Mapper" \
   -e MATRIX_ROWS=64 \
-  -p \
-  -rm \
-  --priviliged \
+  -P \
+  --privileged \
+  --rm \
   knifa/led-matrix-zmq-server
 ```
 
-The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrionment variables. Some that don't really make sense for a container (i.e., `--led-daemon`) aren't exposed. [Check out their README.md for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
+The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrionment variables. Some that don't really make sense for a container (i.e., `--led-daemon`) aren't exposed. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
 
 | ENV                             | CLI                             |
 | ------------------------------- | ------------------------------- |
