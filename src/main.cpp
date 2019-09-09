@@ -42,6 +42,7 @@ void set_options_from_env(rgb_matrix::RGBMatrix::Options *matrix_opts, rgb_matri
     matrix_opts->cols = env_arg_atoi_or_default("MATRIX_COLS", matrix_opts->cols);
     matrix_opts->disable_hardware_pulsing = env_arg_atoi_or_default("MATRIX_DISABLE_HARDWARE_PULSING", matrix_opts->disable_hardware_pulsing);
     matrix_opts->hardware_mapping = env_arg_or_default("MATRIX_HARDWARE_MAPPING", matrix_opts->hardware_mapping);
+    matrix_opts->inverse_colors = env_arg_atoi_or_default("MATRIX_INVERSE_COLORS", matrix_opts->inverse_colors);
     matrix_opts->led_rgb_sequence = env_arg_or_default("MATRIX_LED_SEQUENCE", matrix_opts->led_rgb_sequence);
     matrix_opts->multiplexing = env_arg_atoi_or_default("MATRIX_MULTIPLEXING", matrix_opts->multiplexing);
     matrix_opts->panel_type = env_arg_or_default("MATRIX_PANEL_TYPE", matrix_opts->panel_type);
@@ -53,7 +54,9 @@ void set_options_from_env(rgb_matrix::RGBMatrix::Options *matrix_opts, rgb_matri
     matrix_opts->row_address_type = env_arg_atoi_or_default("MATRIX_ROW_ADDRESS_TYPE", matrix_opts->row_address_type);
     matrix_opts->rows = env_arg_atoi_or_default("MATRIX_ROWS", matrix_opts->rows);
     matrix_opts->scan_mode = env_arg_atoi_or_default("MATRIX_SCAN_MODE", matrix_opts->scan_mode);
+    matrix_opts->show_refresh_rate = env_arg_atoi_or_default("MATRIX_SHOW_REFRESH_RATE", matrix_opts->show_refresh_rate);
 
+    runtime_opts->daemon = env_arg_atoi_or_default("MATRIX_DAEMON", runtime_opts->daemon);
     runtime_opts->gpio_slowdown = env_arg_atoi_or_default("MATRIX_GPIO_SLOWDOWN", runtime_opts->gpio_slowdown);
 }
 
@@ -65,12 +68,6 @@ int main(int argc, char *argv[])
     rgb_matrix::RGBMatrix::Options matrix_opts;
     rgb_matrix::RuntimeOptions runtime_opts;
     set_options_from_env(&matrix_opts, &runtime_opts);
-
-    if (!rgb_matrix::ParseOptionsFromFlags(NULL, NULL, &matrix_opts, &runtime_opts))
-    {
-        rgb_matrix::PrintMatrixFlags(stdout);
-        return 1;
-    }
 
     auto matrix = CreateMatrixFromOptions(matrix_opts, runtime_opts);
     if (matrix == NULL)
@@ -94,9 +91,9 @@ int main(int argc, char *argv[])
         {
             for (int x = 0; x < canvas->width(); x++)
             {
-                int r = image[y * canvas->height() * 4 + x * 4 + 2];
-                int g = image[y * canvas->height() * 4 + x * 4 + 1];
-                int b = image[y * canvas->height() * 4 + x * 4 + 0];
+                int r = image[y * canvas->width() * 4 + x * 4 + 2];
+                int g = image[y * canvas->width() * 4 + x * 4 + 1];
+                int b = image[y * canvas->width() * 4 + x * 4 + 0];
 
                 r = (int)(pow(r / 255.0f, 2.2f) * 255.0f);
                 g = (int)(pow(g / 255.0f, 2.2f) * 255.0f);

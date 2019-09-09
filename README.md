@@ -26,15 +26,18 @@ docker run \
   knifa/led-matrix-zmq-server
 ```
 
-The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrionment variables. Some that don't really make sense for a container (i.e., `--led-daemon`) aren't exposed. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
+The command line arguments provided by `rpi-rgb-led-matrix` are exposed as envrionment variables. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
 
 | ENV                             | CLI                             |
 | ------------------------------- | ------------------------------- |
 | MATRIX_BRIGHTNESS               | --led-brightness                |
 | MATRIX_CHAIN_LENGTH             | --led-chain-length              |
 | MATRIX_COLS                     | --led-cols                      |
+| MATRIX_DAEMON                   | --led-daemon                    |
 | MATRIX_DISABLE_HARDWARE_PULSING | --led-disable-hardware-pulsing  |
+| MATRIX_GPIO_SLOWDOWN            | --led-slowdown-gpio             |
 | MATRIX_HARDWARE_MAPPING         | --led-hardware-mapping          |
+| MATRIX_INVERSE_COLORS           | --led-inverse                   |
 | MATRIX_LED_SEQUENCE             | --led-rgb-sequence              |
 | MATRIX_MULTIPLEXING             | --led-multiplexing              |
 | MATRIX_PANEL_TYPE               | --led-panel-type                |
@@ -46,7 +49,7 @@ The usual command line arguments for `rpi-rgb-led-matrix` are exposed as envrion
 | MATRIX_ROW_ADDRESS_TYPE         | --led-row-addr-type             |
 | MATRIX_ROWS                     | --led-rows                      |
 | MATRIX_SCAN_MODE                | --led-scan-mode                 |
-| MATRIX_GPIO_SLOWDOWN            | --led-slowdown-gpio             |
+| MATRIX_SHOW_REFRESH_RATE        | --led-show-refresh              |
 
 ### Sending Frames
 
