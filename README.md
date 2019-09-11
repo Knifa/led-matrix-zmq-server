@@ -18,7 +18,8 @@ You can run the image with e.g., the following command. Mostly, you MUST pass `-
 docker run \
   -e MATRIX_CHAIN_LENGTH=4 \
   -e MATRIX_COLS=64 \
-  -e MATRIX_MAPPER="U-Mapper" \
+  -e MATRIX_GPIO_SLOWDOWN=2 \
+  -e MATRIX_PIXEL_MAPPER_CONFIG="U-mapper" \
   -e MATRIX_ROWS=64 \
   -p 8182:8182 \
   --privileged \
