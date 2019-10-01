@@ -24,7 +24,7 @@ WORKDIR /root
 RUN apk update \
   && apk add czmq
 
-COPY --from=builder /root/matryx-server ./matryx-server
+COPY --from=builder /root/bin/matryx-server ./matryx-server
 RUN chmod +x ./matryx-server
 
 EXPOSE 8182/tcp
