@@ -1,6 +1,8 @@
 #include <csignal>
 #include <cstdlib>
+#include <cstdint>
 #include <cmath>
+#include <iostream>
 
 #include <czmq.h>
 
@@ -72,12 +74,14 @@ int main(int argc, char *argv[])
     auto matrix = CreateMatrixFromOptions(matrix_opts, runtime_opts);
     if (matrix == NULL)
     {
-        return 1;
+         return 1;
     }
 
     auto canvas = matrix->CreateFrameCanvas();
+    size_t expected_image_size = canvas->width() * canvas->height() * 3;
 
     zsock_t *zrep = zsock_new_rep("tcp://*:8182");
+    std::cout << "led-matrix-zmq-server Listening on tcp://*:8182" << std::endl;
 
     while (running)
     {
@@ -87,29 +91,34 @@ int main(int argc, char *argv[])
         zsock_recv(zrep, "b", &image, &image_size);
         zsock_send(zrep, "z");
 
-        for (int y = 0; y < canvas->height(); y++)
-        {
-            for (int x = 0; x < canvas->width(); x++)
+        if (image_size != expected_image_size) {
+            std::cout << "Image size mismatch! Expected " << expected_image_size << " but got " << image_size << std::endl;
+        } else {
+            for (uint8_t y = 0; y < canvas->height(); y++)
             {
-                int r = image[y * canvas->width() * 4 + x * 4 + 2];
-                int g = image[y * canvas->width() * 4 + x * 4 + 1];
-                int b = image[y * canvas->width() * 4 + x * 4 + 0];
+                for (uint8_t x = 0; x < canvas->width(); x++)
+                {
+                    uint8_t r = image[y * canvas->width() * 3 + x * 3 + 0];
+                    uint8_t g = image[y * canvas->width() * 3 + x * 3 + 1];
+                    uint8_t b = image[y * canvas->width() * 3 + x * 3 + 2];
 
-                r = (int)(pow(r / 255.0f, 2.2f) * 255.0f);
-                g = (int)(pow(g / 255.0f, 2.2f) * 255.0f);
-                b = (int)(pow(b / 255.0f, 2.2f) * 255.0f);
+                    r = (uint8_t)(pow(r / 255.0f, 2.2f) * 255.0f);
+                    g = (uint8_t)(pow(g / 255.0f, 2.2f) * 255.0f);
+                    b = (uint8_t)(pow(b / 255.0f, 2.2f) * 255.0f);
 
-                canvas->SetPixel(
-                    x,
-                    y,
-                    r,
-                    g,
-                    b);
+                    canvas->SetPixel(
+                        x,
+                        y,
+                        r,
+                        g,
+                        b);
+                }
             }
+
+            canvas = matrix->SwapOnVSync(canvas);
         }
 
-        canvas = matrix->SwapOnVSync(canvas);
-        delete image;
+        std::free(image);
     }
 
     delete matrix;
