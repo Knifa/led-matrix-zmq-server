@@ -1,11 +1,12 @@
-FROM arm32v7/alpine:latest as builder
+FROM arm32v7/debian:buster-slim as builder
 
-RUN apk update \
-  && apk add \
-    build-base \
+RUN apt-get update \
+  && apt-get -y install \
+    build-essential \
+    cmake \
     git \
-    libzmq \
-    libzmq-dev
+    libzmq3-dev \
+    libzmq5
 
 COPY ./rpi-rgb-led-matrix /root/rpi-rgb-led-matrix
 WORKDIR /root/rpi-rgb-led-matrix/lib
@@ -17,15 +18,16 @@ COPY ./src /root/src
 RUN make
 
 
-FROM arm32v7/alpine:latest
+FROM arm32v7/debian:buster-slim
 
 WORKDIR /root
 
-RUN apk update \
-  && apk add libzmq
+RUN apt-get update \
+  && apt-get -y install \
+    libzmq5
 
 COPY --from=builder /root/bin/led-matrix-zmq-server ./led-matrix-zmq-server
 RUN chmod +x ./led-matrix-zmq-server
 
-EXPOSE 8182/tcp
+EXPOSE 42042/tcp
 ENTRYPOINT /root/led-matrix-zmq-server
