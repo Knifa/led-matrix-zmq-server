@@ -19,7 +19,7 @@ public:
     ServerOptions server_options;
 
     static struct option long_opts[]{
-        {"endpoint", required_argument, nullptr,
+        {"zmq-endpoint", required_argument, nullptr,
          static_cast<int>(ServerOptions::Args::endpoint)},
         {"bytes-per-pixel", required_argument, nullptr,
          static_cast<int>(ServerOptions::Args::bytes_per_pixel)}};

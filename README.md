@@ -24,12 +24,12 @@ docker run \
     --led-slowdown-gpio=2 \
     --led-pwm-lsb-nanoseconds=50 \
     --led-rows=32 \
-    --endpoint=tcp://*:1337
+    --zmq-endpoint=tcp://*:1337
 ```
 
 The following server arguments are available:
 
-- `--endpoint`: The ZMQ endpoint to listen on. Default is `tcp://*:42024`.
+- `--zmq-endpoint`: The ZMQ endpoint to listen on. Default is `tcp://*:42024`.
 - `--bytes-per-pixel`: Number of *bytes* per pixel. Default is `3` (i.e., `24BPP`)
 
 The remaining matrix arguments are passed directly to `rpi-rgb-led-matrix`. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
