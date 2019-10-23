@@ -1,6 +1,6 @@
 BIN_DIR=bin
 
-BIN=$(BIN_DIR)/matryx-server
+BIN=$(BIN_DIR)/led-matrix-zmq-server
 SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst src/%.cpp, bin/%.o, $(SRC))
 
@@ -12,7 +12,7 @@ RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
 CFLAGS+=-O3 -Wall
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) \
-	 -lpthread -lczmq
+	 -lpthread -lzmq
 
 all : $(BIN)
 

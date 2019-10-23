@@ -3,9 +3,9 @@ FROM arm32v7/alpine:latest as builder
 RUN apk update \
   && apk add \
     build-base \
-    czmq-dev \
     git \
-    libzmq
+    libzmq \
+    libzmq-dev
 
 COPY ./rpi-rgb-led-matrix /root/rpi-rgb-led-matrix
 WORKDIR /root/rpi-rgb-led-matrix/lib
@@ -22,10 +22,10 @@ FROM arm32v7/alpine:latest
 WORKDIR /root
 
 RUN apk update \
-  && apk add czmq
+  && apk add libzmq
 
-COPY --from=builder /root/bin/matryx-server ./matryx-server
-RUN chmod +x ./matryx-server
+COPY --from=builder /root/bin/led-matrix-zmq-server ./led-matrix-zmq-server
+RUN chmod +x ./led-matrix-zmq-server
 
 EXPOSE 8182/tcp
-ENTRYPOINT /root/matryx-server
+ENTRYPOINT /root/led-matrix-zmq-server

@@ -16,48 +16,29 @@ You can run the image with e.g., the following command. Mostly, you MUST pass `-
 
 ```bash
 docker run \
-  -e MATRIX_CHAIN_LENGTH=4 \
-  -e MATRIX_COLS=64 \
-  -e MATRIX_GPIO_SLOWDOWN=2 \
-  -e MATRIX_PIXEL_MAPPER_CONFIG="U-mapper" \
-  -e MATRIX_ROWS=64 \
-  -p 8182:8182 \
   --privileged \
   --rm \
-  knifa/led-matrix-zmq-server
+  knifa/led-matrix-zmq-server \
+    --led-brightness=50 \
+    --led-cols=64 \
+    --led-slowdown-gpio=2 \
+    --led-pwm-lsb-nanoseconds=50 \
+    --led-rows=32 \
+    --endpoint=tcp://*:1337
 ```
 
-The command line arguments provided by `rpi-rgb-led-matrix` are exposed as envrionment variables. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
+The following server arguments are available:
 
-| ENV                             | CLI                             |
-| ------------------------------- | ------------------------------- |
-| MATRIX_BRIGHTNESS               | --led-brightness                |
-| MATRIX_CHAIN_LENGTH             | --led-chain-length              |
-| MATRIX_COLS                     | --led-cols                      |
-| MATRIX_DAEMON                   | --led-daemon                    |
-| MATRIX_DISABLE_HARDWARE_PULSING | --led-disable-hardware-pulsing  |
-| MATRIX_GPIO_SLOWDOWN            | --led-slowdown-gpio             |
-| MATRIX_HARDWARE_MAPPING         | --led-hardware-mapping          |
-| MATRIX_INVERSE_COLORS           | --led-inverse                   |
-| MATRIX_LED_SEQUENCE             | --led-rgb-sequence              |
-| MATRIX_MULTIPLEXING             | --led-multiplexing              |
-| MATRIX_PANEL_TYPE               | --led-panel-type                |
-| MATRIX_PARALLEL                 | --led-parallel                  |
-| MATRIX_PIXEL_MAPPER_CONFIG      | --led-pixel-mapper              |
-| MATRIX_PWM_BITS                 | --led-pwm-bits                  |
-| MATRIX_PWM_DITHER_BITS          | --led-pwm-dither-bits           |
-| MATRIX_PWM_LSB_NANOSECONDS      | --led-pwm-lsb-nanoseconds       |
-| MATRIX_ROW_ADDRESS_TYPE         | --led-row-addr-type             |
-| MATRIX_ROWS                     | --led-rows                      |
-| MATRIX_SCAN_MODE                | --led-scan-mode                 |
-| MATRIX_SHOW_REFRESH_RATE        | --led-show-refresh              |
+- `--endpoint`: The ZMQ endpoint to listen on. Default is `tcp://*:42024`.
+- `--bytes-per-pixel`: Number of *bytes* per pixel. Default is `3` (i.e., `24BPP`)
+
+The remaining matrix arguments are passed directly to `rpi-rgb-led-matrix`. [Check out their README for details](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md).
 
 ### Sending Frames
 
-The server is a simple REQ-REP loop. All you need to do is send your frame as a big ol' byte chunk then wait for an empty message back.
+The server is a simple ZMQ REQ-REP loop. All you need to do is send your frame as a big ol' byte chunk then wait for an empty message back.
 
-Each frame should be in a BGR32 format, with exact size depending on your matrix setup (i.e., whatever `rpi-rgb-led-matrix` says your final canvas size is.)
-
+Each frame should be in a BGR24 (or however large you passed into `--bytes-per-pixel`) format, with exact size depending on your matrix setup (i.e., whatever `rpi-rgb-led-matrix` says your final canvas size is.)
 
 ## License
 

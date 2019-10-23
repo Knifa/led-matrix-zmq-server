@@ -1,127 +1,109 @@
 #include <csignal>
-#include <cstdlib>
 #include <cstdint>
-#include <cmath>
+#include <cstdlib>
+#include <getopt.h>
 #include <iostream>
-
-#include <czmq.h>
-
 #include <led-matrix.h>
+#include <string>
+#include <unistd.h>
+#include <zmq.hpp>
+
+class ServerOptions {
+public:
+  enum class Args { endpoint = 1, bytes_per_pixel };
+
+  std::string endpoint = "tcp://*:42024";
+  int bytes_per_pixel = 3;
+
+  static ServerOptions from_args(int argc, char *argv[]) {
+    ServerOptions server_options;
+
+    static struct option long_opts[]{
+        {"endpoint", required_argument, nullptr,
+         static_cast<int>(ServerOptions::Args::endpoint)},
+        {"bytes-per-pixel", required_argument, nullptr,
+         static_cast<int>(ServerOptions::Args::bytes_per_pixel)}};
+
+    int opt_code;
+    int opt_index;
+    while ((opt_code = getopt_long(argc, argv, "", long_opts, &opt_index)) !=
+           -1) {
+      switch (opt_code) {
+      case static_cast<int>(ServerOptions::Args::endpoint):
+        server_options.endpoint = std::string(optarg);
+        break;
+
+      case static_cast<int>(ServerOptions::Args::bytes_per_pixel):
+        server_options.bytes_per_pixel = std::stoi(optarg);
+        break;
+      }
+    }
+
+    return server_options;
+  }
+};
 
 volatile bool running = true;
 
-void handle_interrupt(const int signo)
-{
-    running = false;
-}
+void handle_interrupt(const int signo) { running = false; }
 
-int env_arg_atoi_or_default(const char *name, const int d = 0)
-{
-    char *arg_str = std::getenv(name);
-    if (arg_str == NULL)
-    {
-        return d;
-    }
+int main(int argc, char *argv[]) {
+  std::signal(SIGINT, handle_interrupt);
+  std::signal(SIGTERM, handle_interrupt);
 
-    return std::atoi(arg_str);
-}
+  rgb_matrix::RGBMatrix::Options matrix_opts;
+  rgb_matrix::RuntimeOptions runtime_opts;
+  ParseOptionsFromFlags(&argc, &argv, &matrix_opts, &runtime_opts);
 
-const char *env_arg_or_default(const char *name, const char *d = NULL)
-{
-    char *arg_str = std::getenv(name);
-    if (arg_str == NULL)
-    {
-        return d;
-    }
+  auto matrix = CreateMatrixFromOptions(matrix_opts, runtime_opts);
+  if (matrix == nullptr) {
+    return 1;
+  }
 
-    return arg_str;
-}
+  matrix->set_luminance_correct(true);
+  auto canvas = matrix->CreateFrameCanvas();
 
-void set_options_from_env(rgb_matrix::RGBMatrix::Options *matrix_opts, rgb_matrix::RuntimeOptions *runtime_opts)
-{
-    matrix_opts->brightness = env_arg_atoi_or_default("MATRIX_BRIGHTNESS", matrix_opts->brightness);
-    matrix_opts->chain_length = env_arg_atoi_or_default("MATRIX_CHAIN_LENGTH", matrix_opts->chain_length);
-    matrix_opts->cols = env_arg_atoi_or_default("MATRIX_COLS", matrix_opts->cols);
-    matrix_opts->disable_hardware_pulsing = env_arg_atoi_or_default("MATRIX_DISABLE_HARDWARE_PULSING", matrix_opts->disable_hardware_pulsing);
-    matrix_opts->hardware_mapping = env_arg_or_default("MATRIX_HARDWARE_MAPPING", matrix_opts->hardware_mapping);
-    matrix_opts->inverse_colors = env_arg_atoi_or_default("MATRIX_INVERSE_COLORS", matrix_opts->inverse_colors);
-    matrix_opts->led_rgb_sequence = env_arg_or_default("MATRIX_LED_SEQUENCE", matrix_opts->led_rgb_sequence);
-    matrix_opts->multiplexing = env_arg_atoi_or_default("MATRIX_MULTIPLEXING", matrix_opts->multiplexing);
-    matrix_opts->panel_type = env_arg_or_default("MATRIX_PANEL_TYPE", matrix_opts->panel_type);
-    matrix_opts->parallel = env_arg_atoi_or_default("MATRIX_PARALLEL", matrix_opts->parallel);
-    matrix_opts->pixel_mapper_config = env_arg_or_default("MATRIX_PIXEL_MAPPER_CONFIG", matrix_opts->pixel_mapper_config);
-    matrix_opts->pwm_bits = env_arg_atoi_or_default("MATRIX_PWM_BITS", matrix_opts->pwm_bits);
-    matrix_opts->pwm_dither_bits = env_arg_atoi_or_default("MATRIX_PWM_DITHER_BITS", matrix_opts->pwm_dither_bits);
-    matrix_opts->pwm_lsb_nanoseconds = env_arg_atoi_or_default("MATRIX_PWM_LSB_NANOSECONDS", matrix_opts->pwm_lsb_nanoseconds);
-    matrix_opts->row_address_type = env_arg_atoi_or_default("MATRIX_ROW_ADDRESS_TYPE", matrix_opts->row_address_type);
-    matrix_opts->rows = env_arg_atoi_or_default("MATRIX_ROWS", matrix_opts->rows);
-    matrix_opts->scan_mode = env_arg_atoi_or_default("MATRIX_SCAN_MODE", matrix_opts->scan_mode);
-    matrix_opts->show_refresh_rate = env_arg_atoi_or_default("MATRIX_SHOW_REFRESH_RATE", matrix_opts->show_refresh_rate);
+  ServerOptions server_options = ServerOptions::from_args(argc, argv);
 
-    runtime_opts->daemon = env_arg_atoi_or_default("MATRIX_DAEMON", runtime_opts->daemon);
-    runtime_opts->gpio_slowdown = env_arg_atoi_or_default("MATRIX_GPIO_SLOWDOWN", runtime_opts->gpio_slowdown);
-}
+  zmq::context_t zmq_ctx;
+  zmq::socket_t zmq_sock(zmq_ctx, zmq::socket_type::rep);
+  zmq_sock.bind(server_options.endpoint.c_str());
+  std::cout << "led-matrix-zmq-server Listening on " << server_options.endpoint
+            << " @ " << (server_options.bytes_per_pixel) * 8 << "BPP" << std::endl;
 
-int main(int argc, char *argv[])
-{
-    std::signal(SIGINT, handle_interrupt);
-    std::signal(SIGTERM, handle_interrupt);
+  size_t expected_frame_size =
+      canvas->width() * canvas->height() * server_options.bytes_per_pixel;
+  uint8_t frame[expected_frame_size];
 
-    rgb_matrix::RGBMatrix::Options matrix_opts;
-    rgb_matrix::RuntimeOptions runtime_opts;
-    set_options_from_env(&matrix_opts, &runtime_opts);
+  while (running) {
+    size_t frame_size = zmq_sock.recv(&frame, expected_frame_size);
+    zmq_sock.send(nullptr, 0);
 
-    auto matrix = CreateMatrixFromOptions(matrix_opts, runtime_opts);
-    if (matrix == NULL)
-    {
-         return 1;
-    }
+    if (frame_size != expected_frame_size) {
+      std::cout << "Frame size mismatch! Expected " << expected_frame_size
+                << " but got " << frame_size << std::endl;
+    } else {
+      for (uint8_t y = 0; y < canvas->height(); y++) {
+        for (uint8_t x = 0; x < canvas->width(); x++) {
+          uint8_t r =
+              frame[y * canvas->width() * server_options.bytes_per_pixel +
+                    x * server_options.bytes_per_pixel + 0];
+          uint8_t g =
+              frame[y * canvas->width() * server_options.bytes_per_pixel +
+                    x * server_options.bytes_per_pixel + 1];
+          uint8_t b =
+              frame[y * canvas->width() * server_options.bytes_per_pixel +
+                    x * server_options.bytes_per_pixel + 2];
 
-    auto canvas = matrix->CreateFrameCanvas();
-    size_t expected_image_size = canvas->width() * canvas->height() * 3;
-
-    zsock_t *zrep = zsock_new_rep("tcp://*:8182");
-    std::cout << "led-matrix-zmq-server Listening on tcp://*:8182" << std::endl;
-
-    while (running)
-    {
-        byte *image = NULL;
-        size_t image_size;
-
-        zsock_recv(zrep, "b", &image, &image_size);
-        zsock_send(zrep, "z");
-
-        if (image_size != expected_image_size) {
-            std::cout << "Image size mismatch! Expected " << expected_image_size << " but got " << image_size << std::endl;
-        } else {
-            for (uint8_t y = 0; y < canvas->height(); y++)
-            {
-                for (uint8_t x = 0; x < canvas->width(); x++)
-                {
-                    uint8_t r = image[y * canvas->width() * 3 + x * 3 + 0];
-                    uint8_t g = image[y * canvas->width() * 3 + x * 3 + 1];
-                    uint8_t b = image[y * canvas->width() * 3 + x * 3 + 2];
-
-                    r = (uint8_t)(pow(r / 255.0f, 2.2f) * 255.0f);
-                    g = (uint8_t)(pow(g / 255.0f, 2.2f) * 255.0f);
-                    b = (uint8_t)(pow(b / 255.0f, 2.2f) * 255.0f);
-
-                    canvas->SetPixel(
-                        x,
-                        y,
-                        r,
-                        g,
-                        b);
-                }
-            }
-
-            canvas = matrix->SwapOnVSync(canvas);
+          canvas->SetPixel(x, y, r, g, b);
         }
+      }
 
-        std::free(image);
+      canvas = matrix->SwapOnVSync(canvas);
     }
+  }
 
-    delete matrix;
-    zsock_destroy(&zrep);
-    return 0;
+  delete matrix;
+
+  return 0;
 }
