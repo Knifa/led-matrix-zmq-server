@@ -30,4 +30,4 @@ COPY --from=builder /root/bin/led-matrix-zmq-server ./led-matrix-zmq-server
 RUN chmod +x ./led-matrix-zmq-server
 
 EXPOSE 42042/tcp
-ENTRYPOINT /root/led-matrix-zmq-server
+ENTRYPOINT ["/root/led-matrix-zmq-server"]
