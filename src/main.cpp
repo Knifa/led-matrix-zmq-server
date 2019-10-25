@@ -22,7 +22,8 @@ public:
         {"zmq-endpoint", required_argument, nullptr,
          static_cast<int>(ServerOptions::Args::endpoint)},
         {"bytes-per-pixel", required_argument, nullptr,
-         static_cast<int>(ServerOptions::Args::bytes_per_pixel)}};
+         static_cast<int>(ServerOptions::Args::bytes_per_pixel)},
+        {nullptr, 0, nullptr, 0}};
 
     int opt_code;
     int opt_index;
