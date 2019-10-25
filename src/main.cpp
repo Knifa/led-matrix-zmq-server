@@ -68,12 +68,14 @@ int main(int argc, char *argv[]) {
   zmq::context_t zmq_ctx;
   zmq::socket_t zmq_sock(zmq_ctx, zmq::socket_type::rep);
   zmq_sock.bind(server_options.endpoint.c_str());
-  std::cout << "led-matrix-zmq-server Listening on " << server_options.endpoint
+  std::cout << "Listening on " << server_options.endpoint
             << " @ " << (server_options.bytes_per_pixel) * 8 << "BPP" << std::endl;
 
   size_t expected_frame_size =
       canvas->width() * canvas->height() * server_options.bytes_per_pixel;
   uint8_t frame[expected_frame_size];
+  std::cout << "Canvas dimensions: " << canvas->width() << "x" << canvas->height() << std::endl;
+  std::cout << "Expected frame size: " << expected_frame_size << std::endl;
 
   while (running) {
     size_t frame_size = zmq_sock.recv(&frame, expected_frame_size);
