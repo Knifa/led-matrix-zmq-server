@@ -4,7 +4,6 @@ RUN apt-get update \
   && apt-get -y install \
     build-essential \
     cmake \
-    git \
     libzmq3-dev \
     libzmq5
 
