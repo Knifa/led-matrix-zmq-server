@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
   rgb_matrix::RGBMatrix::Options matrix_opts;
   rgb_matrix::RuntimeOptions runtime_opts;
   ParseOptionsFromFlags(&argc, &argv, &matrix_opts, &runtime_opts);
+  auto server_options = ServerOptions::from_args(argc, argv);
 
   auto matrix = CreateMatrixFromOptions(matrix_opts, runtime_opts);
   if (matrix == nullptr) {
@@ -62,9 +63,6 @@ int main(int argc, char *argv[]) {
   }
 
   matrix->set_luminance_correct(true);
-  auto canvas = matrix->CreateFrameCanvas();
-
-  ServerOptions server_options = ServerOptions::from_args(argc, argv);
 
   zmq::context_t zmq_ctx;
   zmq::socket_t zmq_sock(zmq_ctx, zmq::socket_type::rep);
@@ -73,10 +71,10 @@ int main(int argc, char *argv[]) {
             << " @ " << (server_options.bytes_per_pixel) * 8 << "BPP" << std::endl;
 
   size_t expected_frame_size =
-      canvas->width() * canvas->height() * server_options.bytes_per_pixel;
+      matrix->width() * matrix->height() * server_options.bytes_per_pixel;
   uint8_t frame[expected_frame_size];
-  std::cout << "Canvas dimensions: " << canvas->width() << "x" << canvas->height() << std::endl;
-  std::cout << "Expected frame size: " << expected_frame_size << std::endl;
+  std::cout << "Frame dimensions: " << matrix->width() << "x" << matrix->height() << std::endl;
+  std::cout << "Expected frame size: " << expected_frame_size << " bytes" << std::endl;
 
   while (running) {
     size_t frame_size = zmq_sock.recv(&frame, expected_frame_size);
@@ -86,23 +84,21 @@ int main(int argc, char *argv[]) {
       std::cout << "Frame size mismatch! Expected " << expected_frame_size
                 << " but got " << frame_size << std::endl;
     } else {
-      for (uint8_t y = 0; y < canvas->height(); y++) {
-        for (uint8_t x = 0; x < canvas->width(); x++) {
+      for (auto y = 0; y < matrix->height(); y++) {
+        for (auto x = 0; x < matrix->width(); x++) {
           uint8_t r =
-              frame[y * canvas->width() * server_options.bytes_per_pixel +
+              frame[y * matrix->width() * server_options.bytes_per_pixel +
                     x * server_options.bytes_per_pixel + 0];
           uint8_t g =
-              frame[y * canvas->width() * server_options.bytes_per_pixel +
+              frame[y * matrix->width() * server_options.bytes_per_pixel +
                     x * server_options.bytes_per_pixel + 1];
           uint8_t b =
-              frame[y * canvas->width() * server_options.bytes_per_pixel +
+              frame[y * matrix->width() * server_options.bytes_per_pixel +
                     x * server_options.bytes_per_pixel + 2];
 
-          canvas->SetPixel(x, y, r, g, b);
+          matrix->SetPixel(x, y, r, g, b);
         }
       }
-
-      canvas = matrix->SwapOnVSync(canvas);
     }
   }
 
