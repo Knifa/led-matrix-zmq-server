@@ -8,7 +8,7 @@ pkg_check_modules(ZMQ REQUIRED libzmq)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(matryx_zmq src/main.cpp)
+add_executable(matryx_zmq src/main.cpp src/color_temp.cpp)
 
 target_include_directories(matryx_zmq PRIVATE ../rpi-rgb-led-matrix/include)
 target_link_directories(matryx_zmq PRIVATE ../rpi-rgb-led-matrix/lib)

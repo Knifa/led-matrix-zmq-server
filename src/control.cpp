@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 
 #include <zmq.hpp>
 
@@ -24,14 +25,34 @@ int main(int argc, char *argv[]) {
         }
 
         const auto brightness = std::stoi(argv[2]);
+        std::cout << "brightness: " << brightness << std::endl;
 
         BrightnessMessage msg;
+        msg.type = ControlMessageType::Brightness;
         msg.args.brightness = brightness;
 
         zmq::message_t req(sizeof(msg));
         std::memcpy(req.data(), &msg, sizeof(msg));
 
         socket.send(req, zmq::send_flags::none);
+    } else if (type == "temperature") {
+        if (argc < 3) {
+            return 1;
+        }
+
+        const auto temperature = std::stoi(argv[2]);
+        std::cout << "temperature: " << temperature << std::endl;
+
+        TemperatureMessage msg;
+        msg.type = ControlMessageType::Temperature;
+        msg.args.temperature = temperature;
+
+        zmq::message_t req(sizeof(msg));
+        std::memcpy(req.data(), &msg, sizeof(msg));
+
+        socket.send(req, zmq::send_flags::none);
+    } else {
+        return 1;
     }
 
     zmq::message_t rep;
