@@ -16,7 +16,7 @@ target_link_libraries(matryx_zmq PRIVATE zmq rgbmatrix pthread)
 
 target_compile_options(matryx_zmq PRIVATE
   -O3
-  -march=native
+  -mtune=native
   -Wall
 )
 
@@ -25,6 +25,6 @@ target_link_libraries(matryx_zmq_control PRIVATE zmq)
 
 target_compile_options(matryx_zmq_control PRIVATE
   -O3
-  -march=native
+  -mtune=native
   -Wall
 )

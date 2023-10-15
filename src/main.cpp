@@ -26,16 +26,16 @@ void setup()
     matrix_opts.cols = 64;
     matrix_opts.chain_length = 10;
     matrix_opts.parallel = 3;
-    matrix_opts.pixel_mapper_config = "Z-mapper";
+    matrix_opts.pixel_mapper_config = "Z-mapper;Rotate:90";
     matrix_opts.show_refresh_rate = 0;
     matrix_runtime_opts.daemon = 0;
     matrix_runtime_opts.drop_privileges = 0;
 
     // Stop fucking with these because they're set right, OK?
     matrix_opts.pwm_lsb_nanoseconds = 100;
-    matrix_opts.pwm_bits = 9;
+    matrix_opts.pwm_bits = 11;
     matrix_opts.pwm_dither_bits = 2;
-    matrix_opts.limit_refresh_rate_hz = 200;
+    matrix_opts.limit_refresh_rate_hz = 180;
     matrix_runtime_opts.gpio_slowdown = 4;
 
     const std::lock_guard<std::mutex> guard(matrix_mutex);
