@@ -108,7 +108,7 @@ void control_loop()
         case ControlMessageType::Brightness:
         {
             const BrightnessMessage *msg = reinterpret_cast<const BrightnessMessage *>(data);
-            if (msg->args.brightness < 1 || msg->args.brightness > 100)
+            if (msg->args.brightness > 100)
             {
                 std::cerr << "Received invalid brightness: " << std::to_string(msg->args.brightness) << std::endl;
                 break;
