@@ -5,7 +5,7 @@
 
 #include "messages.h"
 
-const auto CONTROL_ENDPOINT = "ipc:///var/run/matryx-control";
+const auto CONTROL_ENDPOINT = "ipc:///tmp/matryx-control.sock";
 
 int main(int argc, char *argv[]) {
 

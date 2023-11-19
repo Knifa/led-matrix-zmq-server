@@ -8,8 +8,8 @@
 #include "color_temp.hpp"
 #include "messages.h"
 
-constexpr auto FRAME_ENDPOINT = "ipc:///var/run/matryx";
-constexpr auto CONTROL_ENDPOINT = "ipc:///var/run/matryx-control";
+constexpr auto FRAME_ENDPOINT = "ipc:///tmp/matryx.sock";
+constexpr auto CONTROL_ENDPOINT = "ipc:///tmp/matryx-control.sock";
 constexpr auto BPP = 4;
 
 rgb_matrix::RGBMatrix::Options matrix_opts;
