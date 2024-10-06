@@ -2,6 +2,8 @@
 
 A tool for interacting with [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix/) over ZeroMQ.
 
+Looking for the ye olde version? Check out the [2019 tag](https://github.com/Knifa/led-matrix-zmq-server/releases/tag/2019).
+
 ## Building
 
 - Depends on `cppzmq` and friends.
