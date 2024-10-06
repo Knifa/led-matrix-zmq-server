@@ -2,27 +2,22 @@
 
 #include <cstdint>
 
-enum class ControlMessageType
-{
-    Brightness,
-    Temperature,
+enum class ControlMessageType {
+  Brightness,
+  Temperature,
 };
 
-struct BrightnessMessageArgs
-{
-    uint8_t brightness;
+struct BrightnessMessageArgs {
+  uint8_t brightness;
 };
 
-struct TemperatureMessageArgs
-{
-    uint16_t temperature;
+struct TemperatureMessageArgs {
+  uint16_t temperature;
 };
 
-template <typename T>
-struct ControlMessage
-{
-    ControlMessageType type;
-    T args;
+template <typename T> struct ControlMessage {
+  ControlMessageType type;
+  T args;
 };
 
 using BrightnessMessage = ControlMessage<BrightnessMessageArgs>;
