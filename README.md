@@ -49,7 +49,7 @@ Each frame should be in a BGR32 format.
 
 Brightness and color temperature can be controlled through another simple REQ-REP loop.
 
-See `led-matrix-zmq-control --help` for available options, or see [the source](src/control.cpp) to dig deeper.
+See `led-matrix-zmq-control --help` for available options, or see [the source](src/control_main.cpp) to dig deeper.
 
 
 ## License
