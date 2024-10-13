@@ -36,7 +36,14 @@ sudo ./led-matrix-zmq-server \
 
 The server is a simple ZMQ REQ-REP loop. All you need to do is send your frame as a big ol' byte chunk then wait for an empty message back. Each frame should be in a RGBA32 format.
 
-#### Just let me pipe stuff!
+### Control Messages
+
+Brightness and color temperature can be controlled through another simple REQ-REP loop.
+
+See `led-matrix-zmq-control --help` for available options, or see [the source](src/control_main.cpp) to dig deeper.
+
+
+### Just let me pipe stuff!
 
 [led-matrix-zmq-pipe](src/pipe_main.cpp) is both a bit of an example and a handy tool. It reads raw RGBA32 frames from stdin and sends them to the server.
 
@@ -54,12 +61,6 @@ yt-dlp -f "bv*[height<=480]" "https://www.youtube.com/watch?v=GFq6wH5JR2A" -o - 
   | ffmpeg -re -i pipe: -vf scale=128:64 -f rawvideo -pix_fmt rgba - \
   | sudo ./led-matrix-zmq-pipe -w 128 -h 64
 ```
-
-### Control Messages
-
-Brightness and color temperature can be controlled through another simple REQ-REP loop.
-
-See `led-matrix-zmq-control --help` for available options, or see [the source](src/control_main.cpp) to dig deeper.
 
 
 ## License
