@@ -36,7 +36,7 @@ sudo ./led-matrix-zmq-server \
 
 The server is a simple ZMQ REQ-REP loop. All you need to do is send your frame as a big ol' byte chunk then wait for an empty message back. Each frame should be in a RGBA32 format.
 
-#### led-matrix-zmq-pipe
+#### Just let me pipe stuff!
 
 [led-matrix-zmq-pipe](src/pipe_main.cpp) is both a bit of an example and a handy tool. It reads raw RGBA32 frames from stdin and sends them to the server.
 
