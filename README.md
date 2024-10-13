@@ -7,29 +7,13 @@ Looking for the ye olde version? Check out the [2019 tag](https://github.com/Kni
 ## Building
 
 - Depends on `cppzmq` and friends.
-- Requires a built [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix/) to be in the same "workspace" directory as this repository, i.e.:
-
-  ```shell
-  mkdir workspace
-  cd workspace
-
-  git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
-  cd rpi-rgb-led-matrix
-  make lib
-
-  cd ..
-  git clone https://github.com/Knifa/led-matrix-zmq-server.git
-
-  # workspace
-  # ├── rpi-rgb-led-matrix
-  # └── led-matrix-zmq-server
-  ```
+- Requires a built [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix/). Tell CMake where it is with `-DRPI_RGB_LED_MATRIX_DIR`.
 - Build with `cmake`, e.g.:
 
   ```shell
   mkdir build
   cd build
-  cmake ..
+  cmake -DRPI_RGB_LED_MATRIX_DIR=/path/to/rpi-rgb-led-matrix ..
   make
   ```
 
