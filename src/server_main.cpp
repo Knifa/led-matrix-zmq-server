@@ -11,9 +11,8 @@
 #include <zmq.hpp>
 
 #include "color_temp.hpp"
-#include "messages.h"
-
-constexpr auto BPP = 4;
+#include "consts.hpp"
+#include "messages.hpp"
 
 int max_brightness = 100;
 std::string frame_endpoint;
@@ -51,8 +50,8 @@ void setup(int argc, char *argv[]) {
       .default_value(100)
       .scan<'i', int>();
 
-  parser.add_argument("--frame-endpoint").default_value("ipc:///tmp/matrix-frames.sock");
-  parser.add_argument("--control-endpoint").default_value("ipc:///tmp/matrix-control.sock");
+  parser.add_argument("--frame-endpoint").default_value(consts::DEFAULT_FRAME_ENDPOINT);
+  parser.add_argument("--control-endpoint").default_value(consts::DEFAULT_CONTROL_ENDPOINT);
 
   parser.parse_args(argc, argv);
 
@@ -94,7 +93,7 @@ void setup(int argc, char *argv[]) {
 void frame_loop() {
   const auto matrix_width = matrix->width();
   const auto matrix_height = matrix->height();
-  const std::size_t expected_frame_size = matrix_width * matrix_height * BPP;
+  const std::size_t expected_frame_size = matrix_width * matrix_height * consts::BPP;
 
   zmq::context_t ctx;
   zmq::socket_t sock(ctx, zmq::socket_type::rep);
@@ -102,7 +101,7 @@ void frame_loop() {
 
   PLOG_INFO << "Listening for frames on " << frame_endpoint;
   PLOG_INFO << "Expected frame size: " << expected_frame_size << " bytes" << " (" << matrix_width
-            << "x" << matrix_height << "x" << BPP << ")";
+            << "x" << matrix_height << "x" << consts::BPP << ")";
 
   while (true) {
     zmq::message_t req;

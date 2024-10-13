@@ -47,3 +47,11 @@ target_compile_options(led-matrix-zmq-control PRIVATE
   -mtune=native
   -Wall
 )
+
+add_executable(led-matrix-zmq-pipe src/pipe_main.cpp)
+target_link_libraries(led-matrix-zmq-pipe PRIVATE argparse plog zmq)
+target_compile_options(led-matrix-zmq-pipe PRIVATE
+  -O3
+  -mtune=native
+  -Wall
+)

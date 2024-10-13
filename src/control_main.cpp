@@ -8,7 +8,8 @@
 #include <plog/Log.h>
 #include <zmq.hpp>
 
-#include "messages.h"
+#include "consts.hpp"
+#include "messages.hpp"
 
 int main(int argc, char *argv[]) {
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]) {
 
   argparse::ArgumentParser program("led-matrix-zmq-control");
   program.add_description("Send control messages to led-matrix-zmq-server");
-  program.add_argument("--control-endpoint").default_value("ipc:///tmp/matrix-control.sock");
+  program.add_argument("--control-endpoint").default_value(consts::DEFAULT_CONTROL_ENDPOINT);
 
   argparse::ArgumentParser brightness_command("brightness");
   brightness_command.add_description("Set the brightness");
