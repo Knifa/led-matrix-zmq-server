@@ -21,6 +21,7 @@ std::string control_endpoint;
 rgb_matrix::RGBMatrix::Options matrix_opts;
 rgb_matrix::RuntimeOptions matrix_runtime_opts;
 rgb_matrix::RGBMatrix *matrix;
+std::string matrix_opts_pixel_mapper;
 
 std::mutex matrix_mutex;
 std::tuple<int, int, int> color_temp_current = {255, 255, 255};
@@ -65,7 +66,8 @@ void setup(int argc, char *argv[]) {
   matrix_opts.parallel = parser.get<int>("--parallel");
 
   if (parser.present("--pixel-mapper")) {
-    matrix_opts.pixel_mapper_config = parser.get("pixel-mapper").c_str();
+    matrix_opts_pixel_mapper = parser.get<std::string>("--pixel-mapper");
+    matrix_opts.pixel_mapper_config = matrix_opts_pixel_mapper.c_str();
   }
 
   matrix_opts.pwm_lsb_nanoseconds = parser.get<int>("--pwm-lsb-ns");
