@@ -34,24 +34,9 @@ target_link_libraries(led-matrix-zmq-server PRIVATE
   RpiRgbLedMatrix::RpiRgbLedMatrix
   zmq
 )
-target_compile_options(led-matrix-zmq-server PRIVATE
-  -O3
-  -mtune=native
-  -Wall
-)
 
 add_executable(led-matrix-zmq-control src/control_main.cpp)
 target_link_libraries(led-matrix-zmq-control PRIVATE argparse plog zmq)
-target_compile_options(led-matrix-zmq-control PRIVATE
-  -O3
-  -mtune=native
-  -Wall
-)
 
 add_executable(led-matrix-zmq-pipe src/pipe_main.cpp)
 target_link_libraries(led-matrix-zmq-pipe PRIVATE argparse plog zmq)
-target_compile_options(led-matrix-zmq-pipe PRIVATE
-  -O3
-  -mtune=native
-  -Wall
-)
