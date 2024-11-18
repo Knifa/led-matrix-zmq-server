@@ -24,6 +24,7 @@ rgb_matrix::RGBMatrix *matrix;
 std::string matrix_opts_pixel_mapper;
 
 std::mutex matrix_mutex;
+int color_temp_current_k = 6500;
 std::tuple<int, int, int> color_temp_current = {255, 255, 255};
 
 void setup(int argc, char *argv[]) {
@@ -137,9 +138,13 @@ void frame_loop() {
 }
 
 void control_loop() {
+  using namespace messages;
+
   zmq::context_t ctx;
   zmq::socket_t sock(ctx, zmq::socket_type::rep);
   sock.bind(control_endpoint);
+
+  zmq::message_t empty_rep(0);
 
   PLOG_INFO << "Listening for control messages on " << control_endpoint;
 
@@ -148,38 +153,62 @@ void control_loop() {
     static_cast<void>(sock.recv(req, zmq::recv_flags::none));
 
     const auto data = static_cast<const uint8_t *>(req.data());
-    const auto type = static_cast<ControlMessageType>(data[0]);
+    const auto type = static_cast<messages::ControlRequestType>(data[0]);
 
     const std::lock_guard<std::mutex> guard(matrix_mutex);
+
     switch (type) {
-    case ControlMessageType::Brightness: {
-      const BrightnessMessage *msg = reinterpret_cast<const BrightnessMessage *>(data);
-      if (msg->args.brightness > 100) {
-        PLOG_ERROR << "Received invalid brightness: " << std::to_string(msg->args.brightness);
-        break;
+    case ControlRequestType::SetBrightness: {
+      const SetBrightnessRequest *control_req =
+          reinterpret_cast<const SetBrightnessRequest *>(data);
+      if (control_req->args.brightness > 100) {
+        PLOG_ERROR << "Received invalid brightness: "
+                   << std::to_string(control_req->args.brightness) << "%";
+      } else {
+        int scaled_brightness = (control_req->args.brightness * max_brightness) / 100;
+        PLOG_INFO << "Setting brightness to " << std::to_string(control_req->args.brightness)
+                  << "% (" << std::to_string(scaled_brightness) << ")";
+        matrix->SetBrightness(scaled_brightness);
       }
 
-      int scaled_brightness = (msg->args.brightness * max_brightness) / 100;
-      PLOG_INFO << "Setting brightness to " << std::to_string(msg->args.brightness) << "% ("
-                << std::to_string(scaled_brightness) << ")";
-      matrix->SetBrightness(scaled_brightness);
+      sock.send(empty_rep, zmq::send_flags::none);
     } break;
-    case ControlMessageType::Temperature: {
-      const TemperatureMessage *msg = reinterpret_cast<const TemperatureMessage *>(data);
-      if (msg->args.temperature < 2000 || msg->args.temperature > 6500) {
-        PLOG_ERROR << "Received invalid temperature: " << std::to_string(msg->args.temperature);
-        break;
+    case ControlRequestType::SetTemperature: {
+      const SetTemperatureRequest *control_req =
+          reinterpret_cast<const SetTemperatureRequest *>(data);
+      if (control_req->args.temperature < 2000 || control_req->args.temperature > 6500) {
+        PLOG_ERROR << "Received invalid temperature: " << control_req->args.temperature << "K";
+      } else {
+        PLOG_INFO << "Setting temperature to " << std::to_string(control_req->args.temperature)
+                  << "K";
+
+        color_temp_current_k = control_req->args.temperature;
+        color_temp_current = color_temp::get(static_cast<int>(color_temp_current_k));
       }
 
-      PLOG_INFO << "Setting temperature to " << std::to_string(msg->args.temperature);
+      sock.send(empty_rep, zmq::send_flags::none);
+    } break;
+    case ControlRequestType::GetBrightness: {
+      const BrightnessResponse control_resp = {
+          .type = ControlResponseType::Brightness,
+          .args = {.brightness = matrix->brightness()},
+      };
 
-      const auto temperature = static_cast<float>(msg->args.temperature);
-      color_temp_current = color_temp::get(temperature);
+      PLOG_INFO << "Sending brightness: " << std::to_string(control_resp.args.brightness) << "%";
+
+      sock.send(zmq::message_t(&control_resp, sizeof(control_resp)), zmq::send_flags::none);
+    } break;
+    case ControlRequestType::GetTemperature: {
+      const TemperatureResponse control_resp = {
+          .type = ControlResponseType::Temperature,
+          .args = {.temperature = static_cast<uint16_t>(color_temp_current_k)},
+      };
+
+      PLOG_INFO << "Sending temperature: " << control_resp.args.temperature << "K";
+
+      sock.send(zmq::message_t(&control_resp, sizeof(control_resp)), zmq::send_flags::none);
     } break;
     }
-
-    zmq::message_t rep(0);
-    sock.send(rep, zmq::send_flags::none);
   }
 }
 

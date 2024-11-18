@@ -2,26 +2,48 @@
 
 #include <cstdint>
 
-enum class ControlMessageType : uint8_t {
+namespace messages {
+
+enum class ControlRequestType : uint8_t {
+  SetBrightness,
+  SetTemperature,
+  GetBrightness,
+  GetTemperature,
+};
+
+enum class ControlResponseType : uint8_t {
   Brightness,
   Temperature,
 };
 
 #pragma pack(push, 1)
 
-template <typename T> struct ControlMessage {
-  ControlMessageType type;
+template <typename T> struct ControlRequest {
+  ControlRequestType type;
   T args;
 };
 
-struct BrightnessMessageArgs {
+template <typename T> struct ControlResponse {
+  ControlResponseType type;
+  T args;
+};
+
+struct NullArgs {};
+struct BrightnessArgs {
   uint8_t brightness;
 };
-using BrightnessMessage = ControlMessage<BrightnessMessageArgs>;
-
-struct TemperatureMessageArgs {
+struct TemperatureArgs {
   uint16_t temperature;
 };
-using TemperatureMessage = ControlMessage<TemperatureMessageArgs>;
+
+using SetBrightnessRequest = ControlRequest<BrightnessArgs>;
+using SetTemperatureRequest = ControlRequest<TemperatureArgs>;
+using GetBrightnessRequest = ControlRequest<NullArgs>;
+using GetTemperatureRequest = ControlRequest<NullArgs>;
+
+using BrightnessResponse = ControlResponse<BrightnessArgs>;
+using TemperatureResponse = ControlResponse<TemperatureArgs>;
 
 #pragma pack(pop)
+
+} // namespace messages
