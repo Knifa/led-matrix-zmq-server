@@ -152,8 +152,46 @@ void control_loop() {
     zmq::message_t req;
     static_cast<void>(sock.recv(req, zmq::recv_flags::none));
 
+    if (req.size() < 1) {
+      PLOG_ERROR << "Received empty control message";
+      sock.send(empty_rep, zmq::send_flags::none);
+      continue;
+    }
+
     const auto data = static_cast<const uint8_t *>(req.data());
     const auto type = static_cast<messages::ControlRequestType>(data[0]);
+
+    // Verify that the message is the expected size.
+    switch (type) {
+      case ControlRequestType::SetBrightness: {
+        if (req.size() != sizeof(SetBrightnessRequest)) {
+          PLOG_ERROR << "Received invalid SetBrightnessRequest of size: " << req.size();
+          sock.send(empty_rep, zmq::send_flags::none);
+          continue;
+        }
+      } break;
+      case ControlRequestType::SetTemperature: {
+        if (req.size() != sizeof(SetTemperatureRequest)) {
+          PLOG_ERROR << "Received invalid SetTemperatureRequest of size: " << req.size();
+          sock.send(empty_rep, zmq::send_flags::none);
+          continue;
+        }
+      } break;
+      case ControlRequestType::GetBrightness: {
+        if (req.size() != sizeof(GetBrightnessRequest)) {
+          PLOG_ERROR << "Received invalid GetBrightnessRequest of size: " << req.size();
+          sock.send(empty_rep, zmq::send_flags::none);
+          continue;
+        }
+      } break;
+      case ControlRequestType::GetTemperature: {
+        if (req.size() != sizeof(GetTemperatureRequest)) {
+          PLOG_ERROR << "Received invalid GetTemperatureRequest of size: " << req.size();
+          sock.send(empty_rep, zmq::send_flags::none);
+          continue;
+        }
+      } break;
+    }
 
     const std::lock_guard<std::mutex> guard(matrix_mutex);
 
