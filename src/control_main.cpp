@@ -41,9 +41,12 @@ int main(int argc, char *argv[]) {
   }
 
   zmq::context_t ctx;
-  zmq::socket_t socket(ctx, ZMQ_REQ);
-  socket.connect(program.get("--control-endpoint"));
-  socket.set(zmq::sockopt::rcvtimeo, 1000);
+  zmq::socket_t sock(ctx, ZMQ_REQ);
+  sock.set(zmq::sockopt::linger, 0);
+  sock.set(zmq::sockopt::rcvtimeo, 1000);
+  sock.set(zmq::sockopt::sndtimeo, 1000);
+  sock.connect(program.get("--control-endpoint"));
+
 
   if (program.is_subcommand_used("brightness")) {
     const auto brightness = brightness_command.get<int>("brightness");
@@ -56,7 +59,7 @@ int main(int argc, char *argv[]) {
     zmq::message_t req(sizeof(msg));
     std::memcpy(req.data(), &msg, sizeof(msg));
 
-    socket.send(req, zmq::send_flags::dontwait);
+    sock.send(req, zmq::send_flags::none);
   } else if (program.is_subcommand_used("temperature")) {
     const auto temperature = temperature_command.get<int>("temperature");
     PLOG_INFO << "Setting temperature to " << temperature << "K";
@@ -68,14 +71,14 @@ int main(int argc, char *argv[]) {
     zmq::message_t req(sizeof(msg));
     std::memcpy(req.data(), &msg, sizeof(msg));
 
-    socket.send(req, zmq::send_flags::dontwait);
+    sock.send(req, zmq::send_flags::none);
   } else {
     std::cerr << program;
     return 1;
   }
 
   zmq::message_t rep;
-  static_cast<void>(socket.recv(rep, zmq::recv_flags::none));
+  static_cast<void>(sock.recv(rep, zmq::recv_flags::none));
 
   return 0;
 }
