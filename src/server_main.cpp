@@ -143,12 +143,13 @@ void control_loop() {
   sock.bind(control_endpoint);
 
   const auto null_resp_msg = lmz::NullResponseMessage{};
-  zmq::message_t zmq_null_res = zmq::message_t(&null_resp_msg, sizeof(null_resp_msg));
 
   PLOG_INFO << "Listening for control messages on " << control_endpoint;
 
   while (true) {
     zmq::message_t zmq_req;
+    zmq::message_t zmq_null_res = zmq::message_t(&null_resp_msg, sizeof(null_resp_msg));
+
     static_cast<void>(sock.recv(zmq_req, zmq::recv_flags::none));
 
     const auto data = std::span<const std::byte>(zmq_req.data<const std::byte>(), zmq_req.size());
