@@ -11,7 +11,17 @@
 #include "consts.hpp"
 #include "messages.hpp"
 
-using namespace messages;
+template <lmz::IsMessage RecvType, lmz::IsMessage SendType>
+const RecvType send_and_recv(zmq::socket_t &sock, const SendType &send_msg) {
+  zmq::message_t zmq_req(&send_msg, sizeof(send_msg));
+  sock.send(zmq_req, zmq::send_flags::none);
+
+  zmq::message_t zmq_res;
+  static_cast<void>(sock.recv(zmq_res, zmq::recv_flags::none));
+
+  const auto data = std::span<const std::byte>(zmq_res.data<const std::byte>(), zmq_res.size());
+  return lmz::get_message_from_data<RecvType>(data);
+}
 
 int main(int argc, char *argv[]) {
   static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
@@ -57,58 +67,36 @@ int main(int argc, char *argv[]) {
   sock.set(zmq::sockopt::sndtimeo, 1000);
   sock.connect(program.get("--control-endpoint"));
 
-  zmq::message_t req, resp;
+  zmq::message_t zmq_req, zmq_res;
 
   if (program.is_subcommand_used(set_brightness_command)) {
     const auto brightness = set_brightness_command.get<int>("brightness");
     PLOG_INFO << "Setting brightness to " << brightness << "%";
 
-    SetBrightnessRequest control_req;
-    control_req.type = ControlRequestType::SetBrightness;
-    control_req.args.brightness = brightness;
+    const lmz::SetBrightnessRequestMessage control_req = {
+        .args = {.brightness = static_cast<uint8_t>(brightness)},
+    };
 
-    req = zmq::message_t(&control_req, sizeof(control_req));
-    sock.send(req, zmq::send_flags::none);
-    static_cast<void>(sock.recv(resp, zmq::recv_flags::none));
+    send_and_recv<lmz::NullResponseMessage>(sock, control_req);
   } else if (program.is_subcommand_used(set_temperature_command)) {
     const auto temperature = set_temperature_command.get<int>("temperature");
     PLOG_INFO << "Setting temperature to " << temperature << "K";
 
-    SetTemperatureRequest control_req;
-    control_req.type = ControlRequestType::SetTemperature;
-    control_req.args.temperature = temperature;
+    const lmz::SetTemperatureRequestMessage control_req = {
+        .args = {.temperature = static_cast<uint16_t>(temperature)},
+    };
 
-    req = zmq::message_t(&control_req, sizeof(control_req));
-    sock.send(req, zmq::send_flags::none);
-    static_cast<void>(sock.recv(resp, zmq::recv_flags::none));
+    send_and_recv<lmz::NullResponseMessage>(sock, control_req);
   } else if (program.is_subcommand_used(get_brightness_command)) {
-    const GetBrightnessRequest control_req = {
-        .type = ControlRequestType::GetBrightness,
-        .args = {},
-    };
+    const auto resp_msg =
+        send_and_recv<lmz::GetBrightnessResponseMessage>(sock, lmz::GetBrightnessRequestMessage{});
 
-    req = zmq::message_t(&control_req, sizeof(control_req));
-    sock.send(req, zmq::send_flags::none);
-
-    static_cast<void>(sock.recv(resp, zmq::recv_flags::none));
-    const BrightnessResponse *control_resp =
-        reinterpret_cast<const BrightnessResponse *>(resp.data());
-
-    PLOG_INFO << "Brightness: " << std::to_string(control_resp->args.brightness) << "%";
+    PLOG_INFO << "Brightness: " << std::to_string(resp_msg.args.brightness) << "%";
   } else if (program.is_subcommand_used(get_temperature_command)) {
-    const GetTemperatureRequest control_req = {
-        .type = ControlRequestType::GetTemperature,
-        .args = {},
-    };
+    const auto res_msg = send_and_recv<lmz::GetTemperatureResponseMessage>(
+        sock, lmz::GetTemperatureRequestMessage{});
 
-    req = zmq::message_t(&control_req, sizeof(control_req));
-    sock.send(req, zmq::send_flags::none);
-
-    static_cast<void>(sock.recv(resp, zmq::recv_flags::none));
-    const TemperatureResponse *control_resp =
-        reinterpret_cast<const TemperatureResponse *>(resp.data());
-
-    PLOG_INFO << "Temperature: " << control_resp->args.temperature;
+    PLOG_INFO << "Temperature: " << res_msg.args.temperature;
   } else {
     std::cerr << program;
     return 1;

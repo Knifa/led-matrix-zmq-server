@@ -138,113 +138,75 @@ void frame_loop() {
 }
 
 void control_loop() {
-  using namespace messages;
-
   zmq::context_t ctx;
   zmq::socket_t sock(ctx, zmq::socket_type::rep);
   sock.bind(control_endpoint);
 
-  zmq::message_t empty_rep(0);
+  const auto null_resp_msg = lmz::NullResponseMessage{};
+  zmq::message_t zmq_null_res = zmq::message_t(&null_resp_msg, sizeof(null_resp_msg));
 
   PLOG_INFO << "Listening for control messages on " << control_endpoint;
 
   while (true) {
-    zmq::message_t req;
-    static_cast<void>(sock.recv(req, zmq::recv_flags::none));
+    zmq::message_t zmq_req;
+    static_cast<void>(sock.recv(zmq_req, zmq::recv_flags::none));
 
-    if (req.size() < 1) {
-      PLOG_ERROR << "Received empty control message";
-      sock.send(empty_rep, zmq::send_flags::none);
-      continue;
-    }
-
-    const auto data = static_cast<const uint8_t *>(req.data());
-    const auto type = static_cast<messages::ControlRequestType>(data[0]);
-
-    // Verify that the message is the expected size.
-    switch (type) {
-      case ControlRequestType::SetBrightness: {
-        if (req.size() != sizeof(SetBrightnessRequest)) {
-          PLOG_ERROR << "Received invalid SetBrightnessRequest of size: " << req.size();
-          sock.send(empty_rep, zmq::send_flags::none);
-          continue;
-        }
-      } break;
-      case ControlRequestType::SetTemperature: {
-        if (req.size() != sizeof(SetTemperatureRequest)) {
-          PLOG_ERROR << "Received invalid SetTemperatureRequest of size: " << req.size();
-          sock.send(empty_rep, zmq::send_flags::none);
-          continue;
-        }
-      } break;
-      case ControlRequestType::GetBrightness: {
-        if (req.size() != sizeof(GetBrightnessRequest)) {
-          PLOG_ERROR << "Received invalid GetBrightnessRequest of size: " << req.size();
-          sock.send(empty_rep, zmq::send_flags::none);
-          continue;
-        }
-      } break;
-      case ControlRequestType::GetTemperature: {
-        if (req.size() != sizeof(GetTemperatureRequest)) {
-          PLOG_ERROR << "Received invalid GetTemperatureRequest of size: " << req.size();
-          sock.send(empty_rep, zmq::send_flags::none);
-          continue;
-        }
-      } break;
-    }
+    const auto data = std::span<const std::byte>(zmq_req.data<const std::byte>(), zmq_req.size());
+    const auto id = lmz::get_id_from_data(data);
 
     const std::lock_guard<std::mutex> guard(matrix_mutex);
 
-    switch (type) {
-    case ControlRequestType::SetBrightness: {
-      const SetBrightnessRequest *control_req =
-          reinterpret_cast<const SetBrightnessRequest *>(data);
-      if (control_req->args.brightness > 100) {
-        PLOG_ERROR << "Received invalid brightness: "
-                   << std::to_string(control_req->args.brightness) << "%";
+    switch (id) {
+    case lmz::MessageId::SetBrightnessRequest: {
+      const auto req_msg = lmz::get_message_from_data<lmz::SetBrightnessRequestMessage>(data);
+
+      if (req_msg.args.brightness > 100) {
+        PLOG_ERROR << "Received invalid brightness: " << std::to_string(req_msg.args.brightness)
+                   << "%";
       } else {
-        int scaled_brightness = (control_req->args.brightness * max_brightness) / 100;
-        PLOG_INFO << "Setting brightness to " << std::to_string(control_req->args.brightness)
-                  << "% (" << std::to_string(scaled_brightness) << ")";
+        int scaled_brightness = (req_msg.args.brightness * max_brightness) / 100;
+        PLOG_INFO << "Setting brightness to " << std::to_string(req_msg.args.brightness) << "% ("
+                  << std::to_string(scaled_brightness) << ")";
         matrix->SetBrightness(scaled_brightness);
       }
 
-      sock.send(empty_rep, zmq::send_flags::none);
+      sock.send(zmq_null_res, zmq::send_flags::none);
     } break;
-    case ControlRequestType::SetTemperature: {
-      const SetTemperatureRequest *control_req =
-          reinterpret_cast<const SetTemperatureRequest *>(data);
-      if (control_req->args.temperature < 2000 || control_req->args.temperature > 6500) {
-        PLOG_ERROR << "Received invalid temperature: " << control_req->args.temperature << "K";
+    case lmz::MessageId::SetTemperatureRequest: {
+      const auto control_req = lmz::get_message_from_data<lmz::SetTemperatureRequestMessage>(data);
+
+      if (control_req.args.temperature < 2000 || control_req.args.temperature > 6500) {
+        PLOG_ERROR << "Received invalid temperature: " << control_req.args.temperature << "K";
       } else {
-        PLOG_INFO << "Setting temperature to " << std::to_string(control_req->args.temperature)
+        PLOG_INFO << "Setting temperature to " << std::to_string(control_req.args.temperature)
                   << "K";
 
-        color_temp_current_k = control_req->args.temperature;
+        color_temp_current_k = control_req.args.temperature;
         color_temp_current = color_temp::get(static_cast<int>(color_temp_current_k));
       }
 
-      sock.send(empty_rep, zmq::send_flags::none);
+      sock.send(zmq_null_res, zmq::send_flags::none);
     } break;
-    case ControlRequestType::GetBrightness: {
-      const BrightnessResponse control_resp = {
-          .type = ControlResponseType::Brightness,
-          .args = {.brightness = matrix->brightness()},
+    case lmz::MessageId::GetBrightnessRequest: {
+      const auto res_msg = lmz::GetBrightnessResponseMessage{
+          .args = {.brightness = static_cast<uint8_t>(matrix->brightness())},
       };
 
-      PLOG_INFO << "Sending brightness: " << std::to_string(control_resp.args.brightness) << "%";
+      PLOG_INFO << "Sending brightness: " << std::to_string(res_msg.args.brightness) << "%";
 
-      sock.send(zmq::message_t(&control_resp, sizeof(control_resp)), zmq::send_flags::none);
+      sock.send(zmq::message_t(&res_msg, sizeof(res_msg)), zmq::send_flags::none);
     } break;
-    case ControlRequestType::GetTemperature: {
-      const TemperatureResponse control_resp = {
-          .type = ControlResponseType::Temperature,
+    case lmz::MessageId::GetTemperatureRequest: {
+      const auto res_msg = lmz::GetTemperatureResponseMessage{
           .args = {.temperature = static_cast<uint16_t>(color_temp_current_k)},
       };
 
-      PLOG_INFO << "Sending temperature: " << control_resp.args.temperature << "K";
+      PLOG_INFO << "Sending temperature: " << res_msg.args.temperature << "K";
 
-      sock.send(zmq::message_t(&control_resp, sizeof(control_resp)), zmq::send_flags::none);
+      sock.send(zmq::message_t(&res_msg, sizeof(res_msg)), zmq::send_flags::none);
+    } break;
+    default: {
+      PLOG_ERROR << "Received control message with invalid type";
     } break;
     }
   }

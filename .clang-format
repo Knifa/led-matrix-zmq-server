@@ -5,4 +5,3 @@ AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 ColumnLimit: 100
 NamespaceIndentation: Inner
-
