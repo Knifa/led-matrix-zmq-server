@@ -43,12 +43,6 @@ namespace {
   };
 } // namespace
 
-template <typename T>
-concept IsMessage = requires {
-  { T::id_value } -> std::convertible_to<MessageId>;
-  { T::size_value } -> std::convertible_to<std::size_t>;
-};
-
 using NullResponseMessage = Message<MessageId::NullResponse, NullArgs>;
 using SetBrightnessRequestMessage = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
 using SetTemperatureRequestMessage = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
@@ -58,6 +52,12 @@ using GetTemperatureRequestMessage = Message<MessageId::GetTemperatureRequest, N
 using GetTemperatureResponseMessage = Message<MessageId::GetTemperatureResponse, TemperatureArgs>;
 
 #pragma pack(pop)
+
+template <typename T>
+concept IsMessage = requires {
+  { T::id_value } -> std::convertible_to<MessageId>;
+  { T::size_value } -> std::convertible_to<std::size_t>;
+};
 
 inline MessageId get_id_from_data(const std::span<const std::byte> &data) {
   using UnderlyingType = std::underlying_type_t<MessageId>;
