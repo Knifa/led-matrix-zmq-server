@@ -9,13 +9,15 @@
 namespace lmz {
 
 enum class MessageId : std::uint8_t {
-  NullResponse,
-  SetBrightnessRequest,
-  SetTemperatureRequest,
+  NullReply,
+
   GetBrightnessRequest,
-  GetBrightnessResponse,
+  GetBrightnessReply,
+  SetBrightnessRequest,
+
   GetTemperatureRequest,
-  GetTemperatureResponse,
+  GetTemperatureReply,
+  SetTemperatureRequest,
 };
 
 #pragma pack(push, 1)
@@ -31,10 +33,10 @@ struct TemperatureArgs {
 };
 
 namespace {
-  constexpr MessageId first_message_id = MessageId::NullResponse;
-  constexpr MessageId last_message_id = MessageId::GetTemperatureResponse;
+  constexpr MessageId first_message_id = MessageId::NullReply;
+  constexpr MessageId last_message_id = MessageId::GetTemperatureReply;
 
-  template <MessageId Id, typename ArgsT> struct Message {
+  template <MessageId Id, typename ArgsT = NullArgs> struct Message {
     const MessageId id = Id;
     ArgsT args;
 
@@ -43,21 +45,46 @@ namespace {
   };
 } // namespace
 
-using NullResponseMessage = Message<MessageId::NullResponse, NullArgs>;
-using SetBrightnessRequestMessage = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
-using SetTemperatureRequestMessage = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
-using GetBrightnessRequestMessage = Message<MessageId::GetBrightnessRequest, NullArgs>;
-using GetBrightnessResponseMessage = Message<MessageId::GetBrightnessResponse, BrightnessArgs>;
-using GetTemperatureRequestMessage = Message<MessageId::GetTemperatureRequest, NullArgs>;
-using GetTemperatureResponseMessage = Message<MessageId::GetTemperatureResponse, TemperatureArgs>;
-
-#pragma pack(pop)
-
 template <typename T>
 concept IsMessage = requires {
   { T::id_value } -> std::convertible_to<MessageId>;
   { T::size_value } -> std::convertible_to<std::size_t>;
 };
+
+using NullReply = Message<MessageId::NullReply>;
+using SetBrightnessRequest = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
+using SetTemperatureRequest = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
+using GetBrightnessRequest = Message<MessageId::GetBrightnessRequest>;
+using GetBrightnessReply = Message<MessageId::GetBrightnessReply, BrightnessArgs>;
+using GetTemperatureRequest = Message<MessageId::GetTemperatureRequest>;
+using GetTemperatureReply = Message<MessageId::GetTemperatureReply, TemperatureArgs>;
+
+namespace {
+  template <IsMessage MessageT> struct MessageRequestReply {
+    static_assert(false, "No reply type defined for this message");
+  };
+
+  template <> struct MessageRequestReply<SetBrightnessRequest> {
+    using ReplyType = NullReply;
+  };
+
+  template <> struct MessageRequestReply<SetTemperatureRequest> {
+    using ReplyType = NullReply;
+  };
+
+  template <> struct MessageRequestReply<GetBrightnessRequest> {
+    using ReplyType = GetBrightnessReply;
+  };
+
+  template <> struct MessageRequestReply<GetTemperatureRequest> {
+    using ReplyType = GetTemperatureReply;
+  };
+} // namespace
+
+template <IsMessage RequestT>
+using MessageReplyType = typename MessageRequestReply<RequestT>::ReplyType;
+
+#pragma pack(pop)
 
 inline MessageId get_id_from_data(const std::span<const std::byte> &data) {
   using UnderlyingType = std::underlying_type_t<MessageId>;
