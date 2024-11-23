@@ -34,48 +34,28 @@ namespace {
   constexpr MessageId first_message_id = MessageId::NullResponse;
   constexpr MessageId last_message_id = MessageId::GetTemperatureResponse;
 
-  template <MessageId IdType> struct MessageTraits {
-    using ArgsType = NullArgs;
-  };
-
-  template <> struct MessageTraits<MessageId::SetBrightnessRequest> {
-    using ArgsType = BrightnessArgs;
-  };
-
-  template <> struct MessageTraits<MessageId::SetTemperatureRequest> {
-    using ArgsType = TemperatureArgs;
-  };
-
-  template <> struct MessageTraits<MessageId::GetBrightnessResponse> {
-    using ArgsType = BrightnessArgs;
-  };
-
-  template <> struct MessageTraits<MessageId::GetTemperatureResponse> {
-    using ArgsType = TemperatureArgs;
-  };
-
-  template <MessageId Id> struct Message {
+  template <MessageId Id, typename ArgsT> struct Message {
     const MessageId id = Id;
-    typename MessageTraits<Id>::ArgsType args;
+    ArgsT args;
 
-    static constexpr auto size = sizeof(id) + sizeof(args);
     static constexpr auto id_value = Id;
+    static constexpr auto size_value = sizeof(id) + sizeof(args);
   };
 } // namespace
 
 template <typename T>
 concept IsMessage = requires {
-  { T::size } -> std::convertible_to<std::size_t>;
   { T::id_value } -> std::convertible_to<MessageId>;
+  { T::size_value } -> std::convertible_to<std::size_t>;
 };
 
-using NullResponseMessage = Message<MessageId::NullResponse>;
-using SetBrightnessRequestMessage = Message<MessageId::SetBrightnessRequest>;
-using SetTemperatureRequestMessage = Message<MessageId::SetTemperatureRequest>;
-using GetBrightnessRequestMessage = Message<MessageId::GetBrightnessRequest>;
-using GetBrightnessResponseMessage = Message<MessageId::GetBrightnessResponse>;
-using GetTemperatureRequestMessage = Message<MessageId::GetTemperatureRequest>;
-using GetTemperatureResponseMessage = Message<MessageId::GetTemperatureResponse>;
+using NullResponseMessage = Message<MessageId::NullResponse, NullArgs>;
+using SetBrightnessRequestMessage = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
+using SetTemperatureRequestMessage = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
+using GetBrightnessRequestMessage = Message<MessageId::GetBrightnessRequest, NullArgs>;
+using GetBrightnessResponseMessage = Message<MessageId::GetBrightnessResponse, BrightnessArgs>;
+using GetTemperatureRequestMessage = Message<MessageId::GetTemperatureRequest, NullArgs>;
+using GetTemperatureResponseMessage = Message<MessageId::GetTemperatureResponse, TemperatureArgs>;
 
 #pragma pack(pop)
 
@@ -97,7 +77,7 @@ inline MessageId get_id_from_data(const std::span<const std::byte> &data) {
 
 template <IsMessage MessageT>
 MessageT get_message_from_data(const std::span<const std::byte> &data) {
-  if (data.size() != MessageT::size) {
+  if (data.size() != MessageT::size_value) {
     throw std::runtime_error("Received control message of unexpected size");
   }
 
