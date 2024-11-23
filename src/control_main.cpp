@@ -91,12 +91,12 @@ int main(int argc, char *argv[]) {
     const auto resp_msg =
         send_and_recv<lmz::GetBrightnessResponseMessage>(sock, lmz::GetBrightnessRequestMessage{});
 
-    PLOG_INFO << "Brightness: " << std::to_string(resp_msg.args.brightness) << "%";
+    std::cout << std::to_string(resp_msg.args.brightness) << std::endl;
   } else if (program.is_subcommand_used(get_temperature_command)) {
     const auto res_msg = send_and_recv<lmz::GetTemperatureResponseMessage>(
         sock, lmz::GetTemperatureRequestMessage{});
 
-    PLOG_INFO << "Temperature: " << res_msg.args.temperature << "K";
+    std::cout << std::to_string(res_msg.args.temperature) << std::endl;
   } else {
     std::cerr << program;
     return 1;
