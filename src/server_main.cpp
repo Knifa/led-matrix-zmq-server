@@ -24,6 +24,8 @@ rgb_matrix::RGBMatrix *matrix;
 std::string matrix_opts_pixel_mapper;
 
 std::mutex matrix_mutex;
+
+int brightness_current = 100;
 int color_temp_current_k = 6500;
 std::tuple<int, int, int> color_temp_current = {255, 255, 255};
 
@@ -139,6 +141,9 @@ void frame_loop() {
 
 namespace control {
 
+zmq::context_t ctx;
+zmq::socket_t sock = zmq::socket_t(ctx, zmq::socket_type::rep);
+
 template <lmz::IsMessage RequestT>
 lmz::MessageReplyType<RequestT> process_request(const RequestT &) {
   static_assert(false, "No process implementation for this message");
@@ -146,7 +151,7 @@ lmz::MessageReplyType<RequestT> process_request(const RequestT &) {
 
 template <> lmz::GetBrightnessReply process_request(const lmz::GetBrightnessRequest &) {
   return lmz::GetBrightnessReply{
-      .args = {.brightness = static_cast<uint8_t>((matrix->brightness() * max_brightness) / 100)},
+      .args = {.brightness = static_cast<uint8_t>(brightness_current)},
   };
 }
 
@@ -155,10 +160,10 @@ template <> lmz::NullReply process_request(const lmz::SetBrightnessRequest &req_
     PLOG_ERROR << "Received invalid brightness: " << std::to_string(req_msg.args.brightness) << "%";
     return lmz::NullReply{};
   }
+  PLOG_INFO << "Setting brightness to " << std::to_string(req_msg.args.brightness) << "%";
 
-  int scaled_brightness = (req_msg.args.brightness * max_brightness) / 100;
-  PLOG_INFO << "Setting brightness to " << std::to_string(req_msg.args.brightness) << "% ("
-            << std::to_string(scaled_brightness) << ")";
+  brightness_current = req_msg.args.brightness;
+  int scaled_brightness = (brightness_current * max_brightness) / 100;
   matrix->SetBrightness(scaled_brightness);
 
   return lmz::NullReply{};
@@ -175,7 +180,6 @@ template <> lmz::NullReply process_request(const lmz::SetTemperatureRequest &req
     PLOG_ERROR << "Received invalid temperature: " << req_msg.args.temperature << "K";
     return lmz::NullReply{};
   }
-
   PLOG_INFO << "Setting temperature to " << std::to_string(req_msg.args.temperature) << "K";
 
   color_temp_current_k = req_msg.args.temperature;
@@ -184,8 +188,7 @@ template <> lmz::NullReply process_request(const lmz::SetTemperatureRequest &req
   return lmz::NullReply{};
 }
 
-template <lmz::IsMessage RequestT>
-void process_message(zmq::socket_t &sock, const std::span<const std::byte> &data) {
+template <lmz::IsMessage RequestT> void process_message(const std::span<const std::byte> &data) {
   const auto req_msg = lmz::get_message_from_data<RequestT>(data);
   const std::lock_guard<std::mutex> guard(matrix_mutex);
   const auto reply = process_request<RequestT>(req_msg);
@@ -193,32 +196,29 @@ void process_message(zmq::socket_t &sock, const std::span<const std::byte> &data
 }
 
 void loop() {
-  zmq::context_t ctx;
-  zmq::socket_t sock = zmq::socket_t(ctx, zmq::socket_type::rep);
   sock.bind(control_endpoint);
 
   PLOG_INFO << "Listening for control messages on " << control_endpoint;
 
   while (true) {
-    zmq::message_t zmq_req;
-    static_cast<void>(sock.recv(zmq_req, zmq::recv_flags::none));
+    zmq::message_t req;
+    static_cast<void>(sock.recv(req, zmq::recv_flags::none));
 
-    const auto data = std::span<const std::byte>(zmq_req.data<const std::byte>(), zmq_req.size());
+    const auto data = std::span<const std::byte>(req.data<const std::byte>(), req.size());
     const auto id = lmz::get_id_from_data(data);
 
     switch (id) {
     case lmz::MessageId::GetBrightnessRequest: {
-      process_message<lmz::GetBrightnessRequest>(sock, data);
+      process_message<lmz::GetBrightnessRequest>(data);
     } break;
     case lmz::MessageId::SetBrightnessRequest: {
-      process_message<lmz::SetBrightnessRequest>(sock, data);
+      process_message<lmz::SetBrightnessRequest>(data);
     } break;
-
     case lmz::MessageId::SetTemperatureRequest: {
-      process_message<lmz::SetTemperatureRequest>(sock, data);
+      process_message<lmz::SetTemperatureRequest>(data);
     } break;
     case lmz::MessageId::GetTemperatureRequest: {
-      process_message<lmz::GetTemperatureRequest>(sock, data);
+      process_message<lmz::GetTemperatureRequest>(data);
     } break;
     default: {
       PLOG_ERROR << "Received control message with invalid type";
