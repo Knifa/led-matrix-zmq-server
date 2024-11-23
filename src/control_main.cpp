@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     const auto res_msg = send_and_recv<lmz::GetTemperatureResponseMessage>(
         sock, lmz::GetTemperatureRequestMessage{});
 
-    PLOG_INFO << "Temperature: " << res_msg.args.temperature;
+    PLOG_INFO << "Temperature: " << res_msg.args.temperature << "K";
   } else {
     std::cerr << program;
     return 1;
