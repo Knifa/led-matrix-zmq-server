@@ -12,7 +12,8 @@
 #include "messages.hpp"
 
 template <lmz::IsMessage SendType>
-const lmz::MessageReplyType<SendType> send_and_recv(zmq::socket_t &sock, const SendType &send_msg) {
+const static lmz::MessageReplyType<SendType> send_and_recv(zmq::socket_t &sock,
+                                                           const SendType &send_msg) {
   zmq::message_t zmq_req(&send_msg, sizeof(send_msg));
   sock.send(zmq_req, zmq::send_flags::none);
 
@@ -29,12 +30,12 @@ int main(int argc, char *argv[]) {
 
   argparse::ArgumentParser program("led-matrix-zmq-control");
   program.add_description("Send control messages to led-matrix-zmq-server");
-  program.add_argument("--control-endpoint").default_value(consts::DEFAULT_CONTROL_ENDPOINT);
+  program.add_argument("--control-endpoint").default_value(consts::default_control_endpoint);
 
   argparse::ArgumentParser set_brightness_command("set-brightness");
   set_brightness_command.add_description("Set the brightness");
   set_brightness_command.add_argument("brightness")
-      .help("Brightness level (0%-100%)")
+      .help("Brightness level (0-255)")
       .scan<'i', int>();
   argparse::ArgumentParser set_temperature_command("set-temperature");
   set_temperature_command.add_description("Set the color temperature");
@@ -71,7 +72,7 @@ int main(int argc, char *argv[]) {
 
   if (program.is_subcommand_used(set_brightness_command)) {
     const auto brightness = set_brightness_command.get<int>("brightness");
-    PLOG_INFO << "Setting brightness to " << brightness << "%";
+    PLOG_INFO << "Setting brightness to " << brightness << "";
 
     const lmz::SetBrightnessRequest control_req = {
         .args = {.brightness = static_cast<uint8_t>(brightness)},

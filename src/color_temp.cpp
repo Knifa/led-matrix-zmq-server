@@ -4,11 +4,9 @@
 
 using color_temp::TemperatureColor;
 
-constexpr int color_temp_min = 2000;
-constexpr int color_temp_max = 6500;
-constexpr int color_temp_size = 48;
+constexpr int color_temps_size = 48;
 
-std::array<TemperatureColor, color_temp_size> color_temps = {{
+std::array<TemperatureColor, color_temps_size> color_temps = {{
     {255, 138, 18},  {255, 142, 33},  {255, 147, 44},  {255, 152, 54},  {255, 157, 63},
     {255, 161, 72},  {255, 165, 79},  {255, 169, 87},  {255, 173, 94},  {255, 177, 101},
     {255, 180, 107}, {255, 184, 114}, {255, 187, 120}, {255, 190, 126}, {255, 193, 132},
@@ -22,11 +20,18 @@ std::array<TemperatureColor, color_temp_size> color_temps = {{
 }};
 
 TemperatureColor color_temp::get(int kelvin) {
-  const auto index_fract = float(kelvin - color_temp_min) / float(color_temp_max - color_temp_min);
+  if (kelvin < color_temp::min) {
+    kelvin = color_temp::min;
+  } else if (kelvin > color_temp::max) {
+    kelvin = color_temp::max;
+  }
+
+  const auto index_fract =
+      float(kelvin - color_temp::min) / float(color_temp::max - color_temp::min);
   const auto index_a = static_cast<int>(index_fract * (color_temps.size() - 1));
   const auto index_b = index_a + 1;
 
-  const auto fract = index_fract * float(color_temp_size - 1) - index_a;
+  const auto fract = index_fract * float(color_temps_size - 1) - index_a;
 
   const auto ca = color_temps[index_a];
   const auto cb = color_temps[index_b];

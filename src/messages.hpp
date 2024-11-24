@@ -20,21 +20,22 @@ enum class MessageId : std::uint8_t {
   SetTemperatureRequest,
 };
 
+namespace {
+
+  constexpr MessageId message_id_min = MessageId::NullReply;
+  constexpr MessageId message_id_max = MessageId::SetTemperatureRequest;
+
 #pragma pack(push, 1)
 
-struct NullArgs {};
+  struct NullArgs {};
 
-struct BrightnessArgs {
-  uint8_t brightness;
-};
+  struct BrightnessArgs {
+    uint8_t brightness;
+  };
 
-struct TemperatureArgs {
-  uint16_t temperature;
-};
-
-namespace {
-  constexpr MessageId first_message_id = MessageId::NullReply;
-  constexpr MessageId last_message_id = MessageId::GetTemperatureReply;
+  struct TemperatureArgs {
+    uint16_t temperature;
+  };
 
   template <MessageId Id, typename ArgsT = NullArgs> struct Message {
     const MessageId id = Id;
@@ -43,6 +44,9 @@ namespace {
     static constexpr auto id_value = Id;
     static constexpr auto size_value = sizeof(id) + sizeof(args);
   };
+
+#pragma pack(pop)
+
 } // namespace
 
 template <typename T>
@@ -52,39 +56,39 @@ concept IsMessage = requires {
 };
 
 using NullReply = Message<MessageId::NullReply>;
-using SetBrightnessRequest = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
-using SetTemperatureRequest = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
+
 using GetBrightnessRequest = Message<MessageId::GetBrightnessRequest>;
 using GetBrightnessReply = Message<MessageId::GetBrightnessReply, BrightnessArgs>;
+using SetBrightnessRequest = Message<MessageId::SetBrightnessRequest, BrightnessArgs>;
+
 using GetTemperatureRequest = Message<MessageId::GetTemperatureRequest>;
 using GetTemperatureReply = Message<MessageId::GetTemperatureReply, TemperatureArgs>;
+using SetTemperatureRequest = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
 
 namespace {
   template <IsMessage MessageT> struct MessageRequestReply {
     static_assert(false, "No reply type defined for this message");
   };
 
-  template <> struct MessageRequestReply<SetBrightnessRequest> {
-    using ReplyType = NullReply;
-  };
-
-  template <> struct MessageRequestReply<SetTemperatureRequest> {
-    using ReplyType = NullReply;
-  };
-
   template <> struct MessageRequestReply<GetBrightnessRequest> {
     using ReplyType = GetBrightnessReply;
+  };
+
+  template <> struct MessageRequestReply<SetBrightnessRequest> {
+    using ReplyType = NullReply;
   };
 
   template <> struct MessageRequestReply<GetTemperatureRequest> {
     using ReplyType = GetTemperatureReply;
   };
+
+  template <> struct MessageRequestReply<SetTemperatureRequest> {
+    using ReplyType = NullReply;
+  };
 } // namespace
 
 template <IsMessage RequestT>
 using MessageReplyType = typename MessageRequestReply<RequestT>::ReplyType;
-
-#pragma pack(pop)
 
 inline MessageId get_id_from_data(const std::span<const std::byte> &data) {
   using UnderlyingType = std::underlying_type_t<MessageId>;
@@ -94,8 +98,8 @@ inline MessageId get_id_from_data(const std::span<const std::byte> &data) {
   }
 
   UnderlyingType id_underlying = static_cast<UnderlyingType>(data[0]);
-  if (id_underlying < static_cast<UnderlyingType>(first_message_id) ||
-      id_underlying > static_cast<UnderlyingType>(last_message_id)) {
+  if (id_underlying < static_cast<UnderlyingType>(message_id_min) ||
+      id_underlying > static_cast<UnderlyingType>(message_id_max)) {
     throw std::runtime_error("Received control message with invalid type");
   }
 
