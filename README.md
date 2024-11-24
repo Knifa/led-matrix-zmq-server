@@ -28,7 +28,6 @@ sudo ./led-matrix-zmq-server \
   --cols 64 \
   --rows 64 \
   --chain-length 2 \
-  --max-brightness 50 \
   # ...etc
 ```
 

@@ -231,11 +231,20 @@ static void setup(int argc, char *argv[]) {
   parser.add_argument("--pwm-dither-bits").default_value(2).scan<'i', int>();
   parser.add_argument("--gpio-slowdown").default_value(4).scan<'i', int>();
 
-  parser.add_argument("--limit-hz").default_value(180).scan<'i', int>();
+  parser.add_argument("--limit-hz").default_value(200).scan<'i', int>();
   parser.add_argument("--show-hz").default_value(false).implicit_value(true);
 
   parser.add_argument("--frame-endpoint").default_value(consts::default_frame_endpoint);
   parser.add_argument("--control-endpoint").default_value(consts::default_control_endpoint);
+
+  parser.add_argument("--brightness")
+      .help("Initial brightness (0-255)")
+      .default_value(255)
+      .scan<'i', int>();
+  parser.add_argument("--temperature")
+      .help(std::format("Initial color temperature ({}-{}K)", color_temp::min, color_temp::max))
+      .default_value(color_temp::max)
+      .scan<'i', int>();
 
   parser.add_argument("--no-test-pattern").default_value(false).implicit_value(true);
 
@@ -288,10 +297,22 @@ static void setup(int argc, char *argv[]) {
     matrix_height = matrix->height();
     frame_buffer.resize(matrix_width * matrix_height * consts::bpp);
 
-    brightness_current = 255;
+    auto brightness_arg = parser.get<int>("--brightness");
+    if (brightness_arg < 0 || brightness_arg > 255) {
+      std::cerr << "Invalid brightness value: " << brightness_arg << std::endl;
+      std::exit(1);
+    } else {
+      brightness_current = brightness_arg;
+    }
 
-    color_temp_current_k = color_temp::max;
-    color_temp_current = color_temp::get(color_temp_current_k);
+    auto color_temp_arg = parser.get<int>("--temperature");
+    if (color_temp_arg < color_temp::min || color_temp_arg > color_temp::max) {
+      std::cerr << "Invalid temperature value: " << color_temp_arg << std::endl;
+      std::exit(1);
+    } else {
+      color_temp_current_k = color_temp_arg;
+      color_temp_current = color_temp::get(color_temp_current_k);
+    }
 
     if (!parser.get<bool>("--no-test-pattern")) {
       render_test_pattern();
