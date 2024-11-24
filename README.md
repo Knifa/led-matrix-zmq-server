@@ -50,7 +50,7 @@ convert input.png -resize 128x64^ rgba:- \
   | sudo ./led-matrix-zmq-pipe -w 128 -h 64
 
 # Play a YouTube video.
-yt-dlp -f "bv*[height<=480]" "https://www.youtube.com/watch?v=GFq6wH5JR2A" -o - \
+yt-dlp -f "bv*[height<=480]" "https://www.youtube.com/watch?v=FtutLA63Cp8" -o - \
   | ffmpeg -re -i pipe: -vf scale=128:64 -f rawvideo -pix_fmt rgba - \
   | sudo ./led-matrix-zmq-pipe -w 128 -h 64
 ```
