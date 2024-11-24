@@ -78,7 +78,7 @@ static void update_matrix() {
 
 static void set_brightness(int brightness) {
   const std::lock_guard<std::recursive_mutex> guard(matrix_mutex);
-  brightness_current = brightness;
+  brightness_current = std::clamp(brightness, 0, 255);
   update_matrix();
 }
 
@@ -89,7 +89,7 @@ static int get_brightness() {
 
 static void set_temperature(int temperature) {
   const std::lock_guard<std::recursive_mutex> guard(matrix_mutex);
-  color_temp_current_k = temperature;
+  color_temp_current_k = std::clamp(temperature, color_temp::min, color_temp::max);
   color_temp_current = color_temp::get(temperature);
   update_matrix();
 }
