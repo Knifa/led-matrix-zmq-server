@@ -45,4 +45,5 @@ COPY --from=build \
     /build/led-matrix-zmq-server/build/led-matrix-zmq-pipe \
     ./
 
+ENV PATH="/opt/led-matrix-zmq-server:$PATH"
 CMD ["./led-matrix-zmq-server"]
