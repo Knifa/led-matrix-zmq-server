@@ -17,9 +17,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Repository name as lowercase
-        id: repo
-        run: echo "::set-output name=name::$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')"
+      - name: Get image base name
+        id: image-base-name
+        run: |
+          REPO_LOWERCASE="${{ github.repository }} | tr '[:upper:]' '[:lower:]')"
+          echo "value=ghcr.io/${REPO_LOWERCASE}" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
         with:
@@ -36,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.repo.outputs.name }}/test
+          images: ghcr.io/${{ steps.repo.outputs.name }}
           tags: |
             type=edge
             type=semver,pattern={{version}}
