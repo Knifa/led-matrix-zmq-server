@@ -8,11 +8,11 @@ RUN apk add --no-cache --virtual .build-deps-base \
     make \
     pkgconf
 
-ENV CC clang
-ENV CXX clang++
-ENV CFLAGS "-O3"
-ENV CXXFLAGS "-O3"
-ENV MAKEFLAGS "-j$(nproc)"
+ENV CC=clang
+ENV CXX=clang++
+ENV CFLAGS="-O3"
+ENV CXXFLAGS="-O3"
+ENV MAKEFLAGS="-j$(nproc)"
 
 RUN mkdir -p /build
 WORKDIR /build
