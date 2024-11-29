@@ -10,8 +10,8 @@ RUN apk add --no-cache --virtual .build-deps-base \
 
 ENV CC clang
 ENV CXX clang++
-ENV CFLAGS "-O3 -march=native -mtune=native"
-ENV CXXFLAGS "-O3 -march=native -mtune=native"
+ENV CFLAGS "-O3"
+ENV CXXFLAGS "-O3"
 ENV MAKEFLAGS "-j$(nproc)"
 
 RUN mkdir -p /build

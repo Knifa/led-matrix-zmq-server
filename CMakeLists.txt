@@ -5,7 +5,7 @@ project(led-matrix-zmq-server)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 set(LMZ_COMPILE_FEATURES cxx_std_20)
-set(LMZ_COMPILE_OPTIONS -O3 -mtune=native -Wall -Wextra)
+set(LMZ_COMPILE_OPTIONS -O3 -Wall -Wextra)
 
 find_package(PkgConfig REQUIRED)
 find_package(RpiRgbLedMatrix REQUIRED)
