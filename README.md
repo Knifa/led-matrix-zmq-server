@@ -2,8 +2,6 @@
 
 A tool for interacting with [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix/) over ZeroMQ.
 
-Looking for the ye olde version? Check out the [2019 tag](https://github.com/Knifa/led-matrix-zmq-server/tree/2019).
-
 ## Building
 
 - Depends on `cppzmq` and friends.
@@ -17,6 +15,38 @@ Looking for the ye olde version? Check out the [2019 tag](https://github.com/Kni
   make
   ```
 
+## Docker
+
+[A Docker image is available](https://github.com/Knifa/led-matrix-zmq-server/pkgs/container/led-matrix-zmq-server).
+
+The server must be run with `--privileged` to allow GPIO access.
+
+```shell
+docker run \
+  --privileged \
+  --rm \
+  -v /run/lmz:/run/lmz \
+  ghcr.io/knifa/led-matrix-zmq-server:latest \
+    led-matrix-zmq-server \
+    --frame-endpoint ipc:///run/lmz/frame.sock \
+    --control-endpoint ipc:///run/lmz/control.sock \
+    --cols 64 \
+    --rows 64
+    # ...etc
+```
+
+`led-matrix-zmq-control` and `led-matrix-zmq-pipe` are also available in the image.
+
+```shell
+docker run \
+  --rm \
+  -v /var/run/lmz:/run/lmz \
+  ghcr.io/knifa/led-matrix-zmq-server:latest \
+    led-matrix-zmq-control \
+      --control-endpoint ipc:///run/lmz/control.sock \
+      set-brightness 128
+```
+
 ## Usage
 
 ### Running the Server
@@ -27,7 +57,7 @@ See `led-matrix-zmq-server --help` for available options. These mostly passthrou
 sudo ./led-matrix-zmq-server \
   --cols 64 \
   --rows 64 \
-  --chain-length 2 \
+  --chain-length 2
   # ...etc
 ```
 
