@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - main
+      - docker-test
     tags:
       - v*
 
@@ -15,6 +15,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Repository name as lowercase
+        id: repo
+        run: echo "::set-output name=name::$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
         with:
@@ -31,7 +36,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ steps.repo.outputs.name }}/test
           tags: |
             type=edge
             type=semver,pattern={{version}}
