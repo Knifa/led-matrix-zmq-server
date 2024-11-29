@@ -8,7 +8,6 @@ set(LMZ_COMPILE_FEATURES cxx_std_20)
 set(LMZ_COMPILE_OPTIONS -O3 -Wall -Wextra)
 
 find_package(PkgConfig REQUIRED)
-find_package(RpiRgbLedMatrix REQUIRED)
 pkg_check_modules(ZMQ REQUIRED libzmq)
 
 include(FetchContent)
@@ -24,19 +23,26 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse plog)
 
-add_executable(led-matrix-zmq-server
-  src/server_main.cpp
-  src/color_temp.cpp
+if(
+  CMAKE_SYSTEM_PROCESSOR MATCHES "arm"
+  OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"
 )
-target_link_libraries(led-matrix-zmq-server PRIVATE
-  argparse
-  plog
-  pthread
-  RpiRgbLedMatrix::RpiRgbLedMatrix
-  zmq
-)
-target_compile_features(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_FEATURES})
-target_compile_options(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_OPTIONS})
+  find_package(RpiRgbLedMatrix REQUIRED)
+
+  add_executable(led-matrix-zmq-server
+    src/server_main.cpp
+    src/color_temp.cpp
+  )
+  target_link_libraries(led-matrix-zmq-server PRIVATE
+    argparse
+    plog
+    pthread
+    RpiRgbLedMatrix::RpiRgbLedMatrix
+    zmq
+  )
+  target_compile_features(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_FEATURES})
+  target_compile_options(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_OPTIONS})
+endif()
 
 add_executable(led-matrix-zmq-control
   src/control_main.cpp
