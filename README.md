@@ -17,9 +17,9 @@ A tool for interacting with [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-
 
 ## Docker
 
-[A Docker image is available](https://github.com/Knifa/led-matrix-zmq-server/pkgs/container/led-matrix-zmq-server).
+A [Docker image](https://github.com/Knifa/led-matrix-zmq-server/pkgs/container/led-matrix-zmq-server) is available for `amd64` and `arm64`.
 
-The server must be run with `--privileged` to allow GPIO access.
+The server must be run with `--privileged` to allow GPIO access. This binary is only included in the `arm64` image.
 
 ```shell
 docker run \
@@ -60,6 +60,10 @@ sudo ./led-matrix-zmq-server \
   --chain-length 2
   # ...etc
 ```
+
+#### Endpoints
+
+The `--xyz-endpoint` options pass directly through to ZeroMQ, so you can use any valid transport string. For example, you could specify `tcp://0.0.0.0:42069` to listen on the network.
 
 ### Sending Frames
 
