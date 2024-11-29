@@ -3,7 +3,9 @@ name: build
 on:
   push:
     branches:
-      - "docker-test"
+      - main
+    tags:
+      - v*
 
 jobs:
   build:
@@ -25,4 +27,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/knifa/led-matrix-zmq-server:edge
+          tags:
+            - ghcr.io/knifa/led-matrix-zmq-server:edge
+            - ${{ if startsWith(github.ref, 'refs/tags/v') }} ghcr.io/knifa/led-matrix-zmq-server:${{ github.ref }} ${{ endif }}
