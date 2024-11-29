@@ -20,8 +20,8 @@ jobs:
       - name: Get image base name
         id: image-base-name
         run: |
-          REPO_LOWERCASE="${{ github.repository }} | tr '[:upper:]' '[:lower:]')"
-          echo "value=ghcr.io/${REPO_LOWERCASE}" >> $GITHUB_OUTPUT
+          # REPO_LOWERCASE="${{ github.repository }} | tr '[:upper:]' '[:lower:]')"
+          echo "value=ghcr.io/${{ github.repository }}" >> $GITHUB_OUTPUT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
         with:
