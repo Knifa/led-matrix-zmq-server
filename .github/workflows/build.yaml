@@ -2,8 +2,10 @@ name: build
 
 on:
   push:
-    branches: docker-test
-    tags: release/v*
+    branches:
+      - main
+    tags:
+      - v*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,16 +27,20 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set Docker tag
-        id: tag
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF_NAME/release/}"
-          else
-            echo "tag=edge"
-          fi >> $GITHUB_OUTPUT
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=edge
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}}
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/arm/v7, linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.tag }}
