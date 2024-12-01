@@ -90,6 +90,6 @@ yt-dlp -f "bv*[height<=480]" "https://www.youtube.com/watch?v=FtutLA63Cp8" -o - 
 
 ### Control Messages
 
-Brightness and color temperature can be get/set through another simple REQ-REP loop.
+Brightness, color temperature, etc. can be get/set through another simple REQ-REP loop.
 
 See `led-matrix-zmq-control --help` for available options, or see [the source](src/control_main.cpp) to dig deeper.
