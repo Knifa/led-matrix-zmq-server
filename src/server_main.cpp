@@ -172,6 +172,13 @@ template <> lmz::NullReply process_request(const lmz::SetTemperatureRequest &req
   return lmz::NullReply{};
 }
 
+template <> lmz::GetConfigurationReply process_request(const lmz::GetConfigurationRequest &) {
+  return lmz::GetConfigurationReply{
+      .args = {.width = static_cast<uint16_t>(frame_task::matrix_width),
+               .height = static_cast<uint16_t>(frame_task::matrix_height)},
+  };
+}
+
 template <lmz::IsMessage RequestT> void process_message(const std::span<const std::byte> &data) {
   const auto req_msg = lmz::get_message_from_data<RequestT>(data);
   const auto reply = process_request<RequestT>(req_msg);
@@ -202,6 +209,9 @@ static void loop() {
     } break;
     case lmz::MessageId::SetTemperatureRequest: {
       process_message<lmz::SetTemperatureRequest>(data);
+    } break;
+    case lmz::MessageId::GetConfigurationRequest: {
+      process_message<lmz::GetConfigurationRequest>(data);
     } break;
     default: {
       PLOG_ERROR << "Received control message with invalid type";

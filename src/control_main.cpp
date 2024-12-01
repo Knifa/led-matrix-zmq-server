@@ -48,10 +48,14 @@ int main(int argc, char *argv[]) {
   argparse::ArgumentParser get_temperature_command("get-temperature");
   get_temperature_command.add_description("Get the color temperature");
 
+  argparse::ArgumentParser get_configuration_command("get-configuration");
+  get_configuration_command.add_description("Get the configuration");
+
   program.add_subparser(get_brightness_command);
   program.add_subparser(set_brightness_command);
   program.add_subparser(get_temperature_command);
   program.add_subparser(set_temperature_command);
+  program.add_subparser(get_configuration_command);
 
   try {
     program.parse_args(argc, argv);
@@ -96,6 +100,11 @@ int main(int argc, char *argv[]) {
     const auto res_msg = send_and_recv(sock, lmz::GetTemperatureRequest{});
 
     std::cout << std::to_string(res_msg.args.temperature) << std::endl;
+  } else if (program.is_subcommand_used(get_configuration_command)) {
+    const auto res_msg = send_and_recv(sock, lmz::GetConfigurationRequest{});
+
+    std::cout << std::to_string(res_msg.args.width) << " " << std::to_string(res_msg.args.height)
+              << std::endl;
   } else {
     std::cerr << program;
     return 1;

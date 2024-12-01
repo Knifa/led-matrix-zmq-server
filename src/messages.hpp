@@ -18,12 +18,15 @@ enum class MessageId : std::uint8_t {
   GetTemperatureRequest,
   GetTemperatureReply,
   SetTemperatureRequest,
+
+  GetConfigurationRequest,
+  GetConfigurationReply,
 };
 
 namespace {
 
   constexpr MessageId message_id_min = MessageId::NullReply;
-  constexpr MessageId message_id_max = MessageId::SetTemperatureRequest;
+  constexpr MessageId message_id_max = MessageId::GetConfigurationReply;
 
 #pragma pack(push, 1)
 
@@ -31,6 +34,11 @@ namespace {
 
   struct BrightnessArgs {
     uint8_t brightness;
+  };
+
+  struct ConfigurationArgs {
+    uint16_t width;
+    uint16_t height;
   };
 
   struct TemperatureArgs {
@@ -65,6 +73,9 @@ using GetTemperatureRequest = Message<MessageId::GetTemperatureRequest>;
 using GetTemperatureReply = Message<MessageId::GetTemperatureReply, TemperatureArgs>;
 using SetTemperatureRequest = Message<MessageId::SetTemperatureRequest, TemperatureArgs>;
 
+using GetConfigurationRequest = Message<MessageId::GetConfigurationRequest>;
+using GetConfigurationReply = Message<MessageId::GetConfigurationReply, ConfigurationArgs>;
+
 namespace {
   template <IsMessage MessageT> struct MessageRequestReply {
     static_assert(false, "No reply type defined for this message");
@@ -84,6 +95,10 @@ namespace {
 
   template <> struct MessageRequestReply<SetTemperatureRequest> {
     using ReplyType = NullReply;
+  };
+
+  template <> struct MessageRequestReply<GetConfigurationRequest> {
+    using ReplyType = GetConfigurationReply;
   };
 } // namespace
 
