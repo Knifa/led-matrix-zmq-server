@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.28)
 
 project(led-matrix-zmq-server)
 
+option(BUILD_SERVER "Build the server" ON)
+option(BUILD_TOOLS "Build tools" ON)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-set(LMZ_COMPILE_FEATURES cxx_std_20)
-set(LMZ_COMPILE_OPTIONS -O3 -Wall -Wextra)
+set(COMPILE_FEATURES cxx_std_20)
+set(COMPILE_OPTIONS -O3 -Wall -Wextra)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(ZMQ REQUIRED libzmq)
+pkg_check_modules(ZMQ REQUIRED libzmq cppzmq)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -24,8 +27,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(argparse plog)
 
 if(
-  CMAKE_SYSTEM_PROCESSOR MATCHES "arm"
-  OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"
+  BUILD_SERVER
+  AND (
+    CMAKE_SYSTEM_PROCESSOR MATCHES "arm"
+    OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"
+  )
 )
   find_package(RpiRgbLedMatrix REQUIRED)
 
@@ -40,16 +46,16 @@ if(
     RpiRgbLedMatrix::RpiRgbLedMatrix
     zmq
   )
-  target_compile_features(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_FEATURES})
-  target_compile_options(led-matrix-zmq-server PRIVATE ${LMZ_COMPILE_OPTIONS})
+  target_compile_features(led-matrix-zmq-server PRIVATE ${COMPILE_FEATURES})
+  target_compile_options(led-matrix-zmq-server PRIVATE ${COMPILE_OPTIONS})
 endif()
 
-add_executable(led-matrix-zmq-control
-  src/control_main.cpp
-)
-target_link_libraries(led-matrix-zmq-control PRIVATE argparse plog zmq)
-target_compile_features(led-matrix-zmq-control PRIVATE ${LMZ_COMPILE_FEATURES})
+if (BUILD_TOOLS)
+  add_executable(led-matrix-zmq-control src/control_main.cpp)
+  target_link_libraries(led-matrix-zmq-control PRIVATE argparse plog zmq)
+  target_compile_features(led-matrix-zmq-control PRIVATE ${COMPILE_FEATURES})
 
-add_executable(led-matrix-zmq-pipe src/pipe_main.cpp)
-target_link_libraries(led-matrix-zmq-pipe PRIVATE argparse plog zmq)
-target_compile_features(led-matrix-zmq-pipe PRIVATE ${LMZ_COMPILE_FEATURES})
+  add_executable(led-matrix-zmq-pipe src/pipe_main.cpp)
+  target_link_libraries(led-matrix-zmq-pipe PRIVATE argparse plog zmq)
+  target_compile_features(led-matrix-zmq-pipe PRIVATE ${COMPILE_FEATURES})
+endif()
