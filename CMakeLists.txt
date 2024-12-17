@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(led-matrix-zmq-server)
+project(led-matrix-zmq-server
+  LANGUAGES CXX
+)
 
 option(BUILD_SERVER "Build the server" ON)
 option(BUILD_TOOLS "Build tools" ON)
+option(BUILD_VIRTUAL "Build virtual server" OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -58,4 +61,17 @@ if (BUILD_TOOLS)
   add_executable(led-matrix-zmq-pipe src/pipe_main.cpp)
   target_link_libraries(led-matrix-zmq-pipe PRIVATE argparse plog zmq)
   target_compile_features(led-matrix-zmq-pipe PRIVATE ${COMPILE_FEATURES})
+endif()
+
+if (BUILD_VIRTUAL)
+  find_package(SDL2 REQUIRED)
+
+  add_executable(led-matrix-zmq-virtual src/virtual_main.cpp)
+  target_link_libraries(led-matrix-zmq-virtual PRIVATE
+    argparse
+    plog
+    SDL2::SDL2
+    zmq
+  )
+  target_compile_features(led-matrix-zmq-virtual PRIVATE ${COMPILE_FEATURES})
 endif()
