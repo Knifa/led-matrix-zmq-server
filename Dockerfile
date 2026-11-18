@@ -1,4 +1,4 @@
-FROM alpine:latest AS build
+FROM alpine:3.22 AS build
 
 RUN apk add --no-cache \
   clang \
@@ -30,7 +30,7 @@ RUN mkdir -p build \
   && make
 
 
-FROM alpine:latest AS run
+FROM alpine:3.22 AS run
 
 RUN apk add --no-cache \
   libc++ \

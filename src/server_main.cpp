@@ -187,6 +187,7 @@ static void set_brightness_transition(int brightness, uint16_t transition) {
   {
     const std::lock_guard<std::mutex> guard(transition_mutex);
     if (transition == 0) {
+      brightness_animation.complete();
       frame_task::set_brightness(brightness);
       return;
     } else {
@@ -200,6 +201,7 @@ static void set_temperature_transition(int temperature, uint16_t transition) {
   {
     const std::lock_guard<std::mutex> guard(transition_mutex);
     if (transition == 0) {
+      temperature_animation.complete();
       frame_task::set_temperature(temperature);
       return;
     } else {
