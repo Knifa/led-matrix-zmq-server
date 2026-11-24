@@ -222,19 +222,19 @@ static void loop() {
     }
 
     if (brightness_animation.is_active()) {
-      int current = brightness_animation.current_value();
-      frame_task::set_brightness(current);
+      bool done = brightness_animation.is_complete();
+      frame_task::set_brightness(brightness_animation.current_value());
 
-      if (brightness_animation.is_complete()) {
+      if (done) {
         brightness_animation.complete();
       }
     }
 
     if (temperature_animation.is_active()) {
-      int current = temperature_animation.current_value();
-      frame_task::set_temperature(current);
+      bool done = temperature_animation.is_complete();
+      frame_task::set_temperature(temperature_animation.current_value());
 
-      if (temperature_animation.is_complete()) {
+      if (done) {
         temperature_animation.complete();
       }
     }
